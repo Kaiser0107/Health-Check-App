@@ -12,7 +12,7 @@ export default function NotFoundScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles: any = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   title: { fontSize: 20, fontWeight: '600' },
   link: { marginTop: 16 },

@@ -4,29 +4,18 @@
     "slug": "health-check-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "scheme": "healthcheck",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#f8fafc"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.personal.healthcheck"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#f8fafc"
-      },
       "package": "com.personal.healthcheck"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router"
@@ -36,4 +25,3 @@
     }
   }
 }
-

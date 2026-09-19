@@ -27,9 +27,9 @@ The interface should be clean, easy to understand, and suitable for mobile use.
 Provide editable fields for:
 
 * Full Name
-* Age
-* Sex / Gender
-* Date of Birth
+* Age (auto-calculated from Date of Birth or editable)
+* Sex / Gender (Male or Female)
+* Date of Birth (interactive calendar selector)
 * Contact Number
 * Address
 

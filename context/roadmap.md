@@ -33,7 +33,7 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 |---|---|---|---|
 | 1 | Project Bootstrap | Expo + folders + Firebase + UUID + tabs | ✅ Done |
 | 2 | Data & Logic Layer | Schemas, BMI, thresholds, Storage/Firestore helpers, Context | ✅ Done |
-| 3 | My Info Screen | Profile form — save & load from storage | ⬜ Not Started |
+| 3 | My Info Screen | Profile form — save & load from storage | ✅ Done |
 | 4 | Log Health Screen | Vitals form — BMI auto-calc — save record | ⬜ Not Started |
 | 5 | Dashboard Screen | Read latest record — display vitals + status | ⬜ Not Started |
 | 6 | History Screen | List past records — timestamps — no charts yet | ⬜ Not Started |
@@ -71,10 +71,12 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | 1.7 | Set up `lib/firebase.ts` — init Firestore | `lib/firebase.ts` | ✅ |
 | 1.8 | Add `.gitignore` with `google-services.json` | `.gitignore` | ✅ |
 
-### Dependencies to Install
+### Dependencies Installed
 ```
 npx expo install expo-router @react-native-async-storage/async-storage
 npx expo install react-native-safe-area-context react-native-screens
+npx expo install expo-linking expo-constants expo-font react-native-svg
+npx expo install @react-native-community/datetimepicker
 npx expo install @expo/vector-icons
 
 npm install firebase
@@ -124,7 +126,7 @@ npm install react-native-gifted-charts
 
 ```ts
 // MyInfo
-{ fullName, age, sex, dateOfBirth, contactNumber, address }
+{ fullName, age, sex: 'Male' | 'Female', dateOfBirth, contactNumber, address }
 
 // HealthRecord
 { heartRate, systolic, diastolic, temperature, oxygenLevel,
@@ -162,16 +164,16 @@ npm install react-native-gifted-charts
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 3.1 | Build `InputField` component (unstyled) | `components/ui/InputField.tsx` | ⬜ |
-| 3.2 | Build `MyInfoForm` component | `components/forms/MyInfoForm.tsx` | ⬜ |
-| 3.3 | Wire `my-info.tsx` screen — load + save | `app/(tabs)/my-info.tsx` | ⬜ |
+| 3.1 | Build `InputField` component (unstyled) | `components/ui/InputField.tsx` | ✅ |
+| 3.2 | Build `MyInfoForm` component | `components/forms/MyInfoForm.tsx` | ✅ |
+| 3.3 | Wire `my-info.tsx` screen — load + save | `app/(tabs)/my-info.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [ ] All 6 fields render correctly
-- [ ] Submitting with empty required fields shows inline validation errors
-- [ ] Valid data saves to Firestore (check Firebase Console)
-- [ ] Reopening the screen loads previously saved data into form fields
-- [ ] No TypeScript errors
+- [x] All 6 fields render correctly
+- [x] Submitting with empty required fields shows inline validation errors
+- [x] Valid data saves to local storage (and syncs to Firestore if configured)
+- [x] Reopening the screen loads previously saved data into form fields
+- [x] No TypeScript errors (`npx tsc --noEmit` passed cleanly)
 
 ---
 

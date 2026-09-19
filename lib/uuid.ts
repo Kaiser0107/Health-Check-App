@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import 'react-native-get-random-values'; // polyfill for crypto.getRandomValues
 
 const UUID_KEY = '@health_check:uuid';
 

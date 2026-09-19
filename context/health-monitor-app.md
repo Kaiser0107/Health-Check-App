@@ -1,8 +1,12 @@
 # Personal Health Monitoring App — Project Plan
 
 > **File:** `context/health-monitor-app.md`
-> **Created:** 2026-09-18 | **Updated:** 2026-09-18
-> **Status:** PENDING APPROVAL
+> **Created:** 2026-09-18 | **Updated:** 2026-09-19
+> **Status:** APPROVED — Build in progress (see roadmap)
+>
+> 📌 Related files:
+> - [`requirements.md`](./patient_health_monitoring_app_requirements.md) — Full feature requirements
+> - [`roadmap.md`](./roadmap.md) — Incremental milestone build tracker ← **Start here when building**
 
 ---
 
@@ -33,7 +37,7 @@ Phase 4A (Bootstrap)  →  Phase 4B (Logic Layer)  →  Phase 4C (Navigation She
 | Decision | Choice | Rationale |
 |---|---|---|
 | Platform | React Native + Expo Managed (Expo Go) | Easiest setup, no native code needed |
-| Backend | Firebase Firestore (no Auth) | NoSQL cloud sync; personal app needs no login |
+| Backend / Storage | Local-First (`AsyncStorage`) + Optional Firestore | Zero setup needed to run immediately; works offline and on Expo Snack; optional cloud sync |
 | User ID | UUID generated on first launch, stored in `AsyncStorage` | Stable device identifier without Auth SDK |
 | Styling | React Native `StyleSheet` API | Separated from logic; no utility-class library |
 | Build order | Skeleton-first, design second | Correct logic before visual polish |

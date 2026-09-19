@@ -1,7 +1,11 @@
 # Personal Health Monitoring App — Requirements
 
-> **Updated:** 2026-09-18
+> **Updated:** 2026-09-19
 > **Scope change:** Re-framed from a multi-patient clinical tool to a **personal health tracking app** for a single user (the owner of the device).
+>
+> 📌 Related files:
+> - [`health-monitor-app.md`](./health-monitor-app.md) — Architecture, tech stack & decisions
+> - [`roadmap.md`](./roadmap.md) — Incremental milestone build tracker
 
 ---
 

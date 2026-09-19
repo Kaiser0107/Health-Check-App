@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Firebase — NEVER commit these
+google-services.json
+GoogleService-Info.plist
+.env
+.env.local
+.env.*.local
+
+# Native builds
+ios/
+android/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo
+

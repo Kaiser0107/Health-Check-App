@@ -1,4 +1,4 @@
-# Personal Health Monitoring App — Project Plan
+# Patient Health Monitoring App — Project Plan
 
 > **File:** `context/health-monitor-app.md`
 > **Created:** 2026-09-18 | **Updated:** 2026-09-19
@@ -12,16 +12,22 @@
 
 ## Overview
 
-Build a **personal health tracking app** using **React Native + Expo** (managed workflow / Expo Go). This is a self-use app — the owner logs their own vitals, tracks BMI, and views a personal health dashboard with trend charts. Records sync to **Firebase Firestore** without any authentication layer. Styles are written using the **React Native `StyleSheet` API**, separated from logic in dedicated style files.
+Build a **Patient Health Monitoring App** using **React Native + Expo** (managed workflow SDK 54 / Expo Go / Expo Snack).
+
+This application allows **patients, caregivers, teachers, nurses, or healthcare personnel** to record basic patient information and vital health measurements. The app automatically calculates BMI, evaluates the entered health data against standard healthcare thresholds, saves records locally, and displays an updated health monitoring dashboard.
+
+### Core Sections:
+1. **Patient Information & Health Data Entry**: Patient ID and demographics form + 7 vitals entry form with live interactive BMI calculation.
+2. **Health Monitoring Dashboard**: Patient summary card, overall health status badge, and individual vital cards with status evaluation.
 
 ### Build Strategy: Skeleton-First
 
-> 🔴 **Foundation before design.** Build the full logical skeleton first — data models, Firebase wiring, BMI logic, navigation shell, state management — before any styling is applied.
+> 🔴 **Foundation before design.** Build the full logical skeleton first — data models, storage wiring, BMI logic, navigation shell, state management — before visual polish is applied.
 
 ```
-Phase 4A (Bootstrap)  →  Phase 4B (Logic Layer)  →  Phase 4C (Navigation Shell)
-                                    ↓
-                       Phase 5 (StyleSheet Design)  →  Phase X (Verification)
+Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
+                                 ↓
+                   Dashboard & History Charts  →  Verification
 ```
 
 ---
@@ -36,43 +42,33 @@ Phase 4A (Bootstrap)  →  Phase 4B (Logic Layer)  →  Phase 4C (Navigation She
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Platform | React Native + Expo Managed (Expo Go & Snack) | Easiest setup, SDK 54 compatibility, no native code needed |
+| Domain | Patient Health Monitoring | Used by patients, caregivers, teachers, nurses, or healthcare staff |
+| Platform | React Native + Expo Managed (Expo Go & Snack) | Easiest setup, SDK 54 compatibility, cross-platform |
 | Backend / Storage | 100% Local-First (`AsyncStorage`) | Zero setup needed to run immediately; works offline and on Expo Snack with 0 runtime dependencies |
-| User ID | UUID generated on first launch, stored in `AsyncStorage` | Stable device identifier without Auth SDK |
+| Patient ID | Captured in Patient Info Form | Allows unique tracking of patient records |
+| Device UUID | UUID generated on first launch, stored in `AsyncStorage` | Internal stable device/instance identifier |
 | Styling | React Native `StyleSheet` API | Separated from logic; no utility-class library |
 | Build order | Skeleton-first, design second | Correct logic before visual polish |
 | History charts | Yes — line chart per vital | Meaningful trend visibility |
 
 ---
 
-## Why No Authentication?
+## Why Local-First Without Auth?
 
-Firebase Anonymous Auth was removed for the following reasons:
-
-1. **Single user, single device** — there is no scenario where multiple users access the same data.
-2. **No sign-in friction** — the app should open and be ready immediately.
-3. **Simpler codebase** — no Auth SDK, no token refresh, no sign-in flows.
-4. **Equivalent security** — a UUID stored in `AsyncStorage` + Firestore rules restricted to that UUID provides the same data isolation without the Auth overhead.
-
-```
-First launch:
-  UUID generated → stored in AsyncStorage
-  UUID used as Firestore document key (users/{uuid})
-
-Every subsequent launch:
-  UUID read from AsyncStorage
-  Firestore reads/writes scoped to users/{uuid}
-```
+1. **Healthcare Personnel & Caregiver Utility** — nurses, teachers, caregivers, or patients can immediately log vitals without sign-in friction or internet connectivity hurdles.
+2. **Full Offline Reliability** — functions reliably in clinics, schools, homes, and remote areas.
+3. **Simpler & Robust Codebase** — zero Auth SDK overhead, zero token refresh bugs, zero external cloud dependencies.
+4. **Simulator & Snack Ready** — runs instantly in Expo Snack and local Expo Go with 100% deterministic local storage.
 
 ---
 
 ## Success Criteria
 
-- [x] Personal profile (My Info) fully editable with all 6 fields (Male/Female gender chips, native calendar selector)
-- [x] Health data entry covers all 7 vitals (Heart Rate, BP, Temp, SpO₂, Weight, Height, Blood Sugar)
+- [x] Patient profile (Patient Information) fully editable with all fields (Patient ID, Full Name, Age, Sex, Date of Birth, Contact, Address)
+- [x] Health data entry covers all 7 vitals (Heart Rate, BP, Temp, SpO2, Weight, Height, Blood Sugar)
 - [x] BMI auto-calculates and updates reactively on weight/height change
 - [x] BMI category label (Underweight / Normal / Overweight / Obese) displays correctly
-- [ ] Dashboard shows cards for every vital with colour-coded status
+- [ ] Dashboard shows Patient Summary and cards for every vital with colour-coded status
 - [ ] Health History shows past records with a line chart per vital
 - [x] All records persist to AsyncStorage and survive app restart (100% Local-First)
 - [x] App runs on Android and iOS via Expo Go and Expo Snack without errors
@@ -89,8 +85,8 @@ Every subsequent launch:
 | Navigation | Expo Router + Universal `App.tsx` | Native tab routing + Snack simulator support |
 | State | React Context (`AppContext.tsx`) | Lightweight reactive state; zero boilerplate |
 | Storage | `@react-native-async-storage/async-storage` | 100% Local-First; zero account friction; offline |
-| Auth | ❌ None | Personal app — device UUID in AsyncStorage |
-| User ID | `AsyncStorage` UUID (`lib/uuid.ts`) | Stable device identifier without Auth SDK |
+| Auth | ❌ None | Patient tool — immediate offline access |
+| User ID | `AsyncStorage` UUID (`lib/uuid.ts`) | Internal stable device identifier |
 | Charts | `react-native-gifted-charts` | Expo-compatible line charts |
 | Forms | `react-hook-form` + `zod` + `lib/zodResolver.ts` | Type-safe validation without subpath export issues |
 | Date Picker | `@react-native-community/datetimepicker` | Native modal calendar picker |

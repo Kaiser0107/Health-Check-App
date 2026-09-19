@@ -1,4 +1,4 @@
-# Personal Health Monitoring App — Build Roadmap
+# Patient Health Monitoring App — Build Roadmap
 
 > **File:** `context/roadmap.md`
 > **Created:** 2026-09-19
@@ -31,11 +31,11 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 
 | # | Milestone | Focus | Status |
 |---|---|---|---|
-| 1 | Project Bootstrap | Expo + folders + Firebase + UUID + tabs | ✅ Done |
-| 2 | Data & Logic Layer | Schemas, BMI, thresholds, Storage/Firestore helpers, Context | ✅ Done |
-| 3 | My Info Screen | Profile form — save & load from storage | ✅ Done |
+| 1 | Project Bootstrap | Expo + folders + UUID + tabs | ✅ Done |
+| 2 | Data & Logic Layer | Schemas, BMI, thresholds, Storage helpers, Context | ✅ Done |
+| 3 | Patient Information Screen | Patient profile form — save & load from storage | ✅ Done |
 | 4 | Log Health Screen | Vitals form — BMI auto-calc — save record | ✅ Done |
-| 5 | Dashboard Screen | Read latest record — display vitals + status | ⬜ Not Started |
+| 5 | Dashboard Screen | Read latest record — patient summary, vitals + status | ⬜ Not Started |
 | 6 | History Screen | List past records — timestamps — no charts yet | ⬜ Not Started |
 | 7 | Settings Screen | Clear all data — about info | ⬜ Not Started |
 | 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ⬜ Not Started |
@@ -152,16 +152,16 @@ npm install react-native-gifted-charts
 
 ---
 
-## Milestone 3 — My Info Screen
+## Milestone 3 — Patient Information Screen
 
-> **Goal:** A working, unstyled personal profile form. Data loads from Firestore on mount, edits save back to Firestore.
-> **No design — plain `<View>` and `<Text>` only.**
+> **Goal:** A working patient information profile form. Data loads from local storage on mount, edits save back to local storage.
+> **Clean, accessible functional layout using React Native `StyleSheet`.**
 
 ### Considerations
 - Form uses `react-hook-form` + self-contained `lib/zodResolver.ts` — no external resolver package or subpath resolution issues
+- Captures core patient demographics: Patient ID, Full Name, Age, Sex, Date of Birth, Contact Number, Address
 - On mount: read from `AsyncStorage` via `useMyInfo` → populate form defaults
 - On submit: validate → save to `AsyncStorage` via `updateMyInfo` → show success `Alert`
-- All fields are optional on first open (user may not have set them yet)
 - The `InputField` shared component is created here — it will be reused everywhere
 - Sex field uses interactive Male/Female chips
 - Date of Birth uses native modal calendar selector (`@react-native-community/datetimepicker`) with auto-age computation
@@ -171,11 +171,11 @@ npm install react-native-gifted-charts
 | # | Task | File(s) | Done? |
 |---|---|---|---|
 | 3.1 | Build `InputField` component (unstyled) | `components/ui/InputField.tsx` | ✅ |
-| 3.2 | Build `MyInfoForm` component (Male/Female chips, DatePicker) | `components/forms/MyInfoForm.tsx` | ✅ |
+| 3.2 | Build `MyInfoForm` / `PatientInfoForm` component | `components/forms/MyInfoForm.tsx` | ✅ |
 | 3.3 | Wire `my-info.tsx` screen — load + save | `app/(tabs)/my-info.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [x] All 6 fields render correctly (Full Name, Age, Sex, Date of Birth, Contact Number, Address)
+- [x] All fields render correctly (Patient ID, Full Name, Age, Sex, Date of Birth, Contact Number, Address)
 - [x] Submitting with empty required fields shows inline validation errors
 - [x] Valid data saves to local storage (`AsyncStorage`)
 - [x] Reopening the screen loads previously saved data into form fields

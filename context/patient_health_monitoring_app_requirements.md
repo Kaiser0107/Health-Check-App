@@ -1,7 +1,7 @@
-# Personal Health Monitoring App — Requirements
+# Patient Health Monitoring App — Requirements
 
 > **Updated:** 2026-09-19
-> **Scope change:** Re-framed from a multi-patient clinical tool to a **personal health tracking app** for a single user (the owner of the device).
+> **Specification Reference:** Specifications aligned directly with original `health.pdf` requirements.
 >
 > 📌 Related files:
 > - [`health-monitor-app.md`](./health-monitor-app.md) — Architecture, tech stack & decisions
@@ -11,44 +11,46 @@
 
 ## 1. MAIN OBJECTIVE
 
-Build a simple, modern, personal health tracking app for **self-monitoring**. The app is for the owner's own use — tracking vitals over time, calculating BMI, and viewing a health dashboard to understand personal health trends.
+Develop a simple, modern, user-friendly **Patient Health Monitoring App** that can be used by **patients, caregivers, teachers, nurses, or healthcare personnel** to record basic patient information and vital health measurements.
 
-The app has two main sections:
+The application automatically calculates BMI, evaluates entered health data against standard health thresholds, saves records, and displays an updated health monitoring dashboard.
 
-1. **My Info** — personal profile (replaces "Patient Information")
-2. **Health Dashboard** — live vitals overview and history
+The app has two core functional areas:
+1. **Patient Information & Health Data Entry**
+2. **Health Monitoring Dashboard**
 
-The interface should be clean, easy to understand, and suitable for mobile use.
+The interface is clean, responsive, easy to understand, and optimized for mobile devices and cloud simulators (Expo Snack and Expo Go).
 
 ---
 
-## 2. MY INFORMATION (Personal Profile)
+## 2. PATIENT INFORMATION
 
 Provide editable fields for:
 
-* Full Name
-* Age (auto-calculated from Date of Birth or editable)
-* Sex / Gender (Male or Female)
-* Date of Birth (interactive calendar selector)
-* Contact Number
-* Address
+* **Patient ID** (Identification code / hospital or school record number)
+* **Full Name**
+* **Age** (Auto-calculated from Date of Birth or manually editable)
+* **Sex / Gender** (Male or Female)
+* **Date of Birth** (Interactive modal calendar selector)
+* **Contact Number**
+* **Address**
 
-> **Note:** "Patient ID" is removed — not relevant for a personal app. The owner is always the one and only user.
-
-Include an **Edit Profile** function to modify previously entered information.
+Include an **Edit Patient Information** function allowing the user (patient, caregiver, teacher, or nurse) to modify previously recorded patient details.
 
 ---
 
 ## 3. HEALTH DATA ENTRY
 
-Input fields for the following measurements:
+Input fields for the following 7 vital measurements:
 
 **Heart Rate**
 * Input: beats per minute (BPM)
 * Example: 72 BPM
 
 **Blood Pressure**
-* Two inputs: Systolic / Diastolic
+* Two inputs:
+  * Systolic (mmHg)
+  * Diastolic (mmHg)
 * Example: 120/80 mmHg
 
 **Temperature**
@@ -56,7 +58,7 @@ Input fields for the following measurements:
 * Example: 36.7 °C
 
 **Oxygen Level**
-* Input: SpO₂ percentage
+* Input: SpO2 percentage (%)
 * Example: 98%
 
 **Weight**
@@ -66,27 +68,28 @@ Input fields for the following measurements:
 **Height**
 * Input: centimeters (cm)
 * Example: 170 cm
-* Required for BMI calculation
+* Required for live BMI calculation
 
 **Blood Sugar**
 * Input: mg/dL
-* Optional measurement type selector: Fasting / Random / Other
+* Selector for measurement type:
+  * Fasting
+  * Random
+  * Other
 
 ---
 
 ## 4. BMI CALCULATOR
 
-Auto-calculate BMI using:
+Automatically calculate BMI using:
 
-```
-BMI = Weight (kg) / Height² (m²)
-```
+$$\text{BMI} = \frac{\text{Weight (kg)}}{(\text{Height (m)})^2}$$
 
 Example:
 * Weight = 65 kg, Height = 170 cm = 1.70 m
-* BMI = 65 ÷ (1.70 × 1.70) = **22.49**
+* $\text{BMI} = 65 \div (1.70 \times 1.70) = \mathbf{22.49}$
 
-Display BMI value + category:
+Display BMI value and standard WHO category:
 
 | Category | BMI Range |
 |---|---|
@@ -95,7 +98,7 @@ Display BMI value + category:
 | Overweight | 25.0 – 29.9 |
 | Obese | ≥ 30.0 |
 
-BMI updates automatically whenever weight or height changes.
+The BMI automatically updates whenever weight or height changes in the health entry form.
 
 ---
 
@@ -103,29 +106,34 @@ BMI updates automatically whenever weight or height changes.
 
 Component-based structure with the following screens:
 
-* **Dashboard** — My Summary, Overall Status, all vital cards (Heart Rate, Blood Pressure, Temperature, Oxygen, Weight, BMI, Blood Sugar)
-* **My Info** — Full Name, Age, Sex, Birth Date, Contact, Address
-* **Log Health** — Heart Rate, Blood Pressure, Temperature, Oxygen Level, Weight, Height, Blood Sugar
-* **BMI** — Live BMI value + category
-* **History** — Past health records with line charts per vital
-* **Settings** — App preferences, data management
+* **Dashboard**
+  * Patient Summary (Patient ID, Name, Age, Sex)
+  * Overall Health Status (Normal / Warning / Critical)
+  * Vital Cards: Heart Rate, Blood Pressure, Temperature, Oxygen Level, Weight, BMI, Blood Sugar
+* **Patient Info** (Patient Profile)
+  * Patient ID, Name, Age, Sex, Date of Birth, Contact Number, Address
+* **Log Health** (Health Data Form)
+  * Inputs for all 7 vitals + Blood Sugar Type selector
+  * Live interactive BMI calculation & category badge preview
+* **Health History**
+  * Past health records with timestamps and line charts per vital
+* **Settings**
+  * App preferences, data management, clear data option
 
 ---
 
 ## 6. STYLING APPROACH
 
-> Styling is a **separate concern** from logic and is applied after the app skeleton is built.
-
-* Styles are written using **React Native `StyleSheet` API** (no utility-class libraries like NativeWind)
-* Each screen and component has its own dedicated `styles` object or a co-located `*.styles.ts` file
-* A shared `constants/theme.ts` defines the design tokens (colours, spacing, typography)
-* Healthcare-appropriate palette: whites, blues, greens — **no purple/violet**
+* Styles written using the **React Native `StyleSheet` API** (no utility-class libraries like NativeWind).
+* Separation of concerns: visual presentation kept clean and accessible.
+* Professional healthcare palette: whites, blues, greens — **no purple/violet**.
+* Minimum touch target size of 48dp on all interactive elements.
 
 ---
 
 ## 7. DATA & STORAGE
 
 * Storage is **100% Local-First** using `@react-native-async-storage/async-storage`.
-* **Zero authentication friction** — the app is strictly personal; a UUID is generated on first launch and stored in `AsyncStorage`.
-* **Zero cloud/Firebase runtime dependencies** — ensures instant launch, full offline reliability, and 100% seamless compatibility with Expo Snack and Expo Go.
-* Data export/clear functionality managed via the Settings screen.
+* Fast, lightweight, and fully offline-capable.
+* Zero external account/login friction; works instantly out of the box.
+* Guaranteed 100% compatible with Expo Snack and Expo Go without cloud setup.

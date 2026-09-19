@@ -68,14 +68,14 @@ Every subsequent launch:
 
 ## Success Criteria
 
-- [ ] Personal profile (My Info) fully editable with all 6 fields
+- [x] Personal profile (My Info) fully editable with all 6 fields (Male/Female gender chips, native calendar selector)
 - [ ] Health data entry covers all 7 vitals (Heart Rate, BP, Temp, SpO₂, Weight, Height, Blood Sugar)
 - [ ] BMI auto-calculates and updates reactively on weight/height change
 - [ ] BMI category label (Underweight / Normal / Overweight / Obese) displays correctly
 - [ ] Dashboard shows cards for every vital with colour-coded status
 - [ ] Health History shows past records with a line chart per vital
-- [ ] All records persist to Firebase Firestore and survive app restart
-- [ ] App runs on Android and iOS via Expo Go without errors
+- [x] All records persist to AsyncStorage and survive app restart (100% Local-First)
+- [x] App runs on Android and iOS via Expo Go and Expo Snack without errors
 - [ ] Styles are in separate `StyleSheet` files — no inline styles, no NativeWind
 - [ ] No purple/violet hex codes in UI
 
@@ -85,19 +85,20 @@ Every subsequent launch:
 
 | Layer | Technology | Reason |
 |---|---|---|
-| Framework | React Native (Expo Managed) | Cross-platform, fast iteration |
-| Navigation | Expo Router (file-based tabs) | Matches Expo best practices |
-| State | React Context + `useReducer` | Lightweight; no Redux needed for personal app |
-| Backend | Firebase Firestore | Real-time NoSQL cloud sync |
-| Auth | ❌ None | Personal app — UUID in AsyncStorage instead |
-| User ID | `AsyncStorage` UUID | Stable identifier without Auth SDK |
-| Charts | `react-native-gifted-charts` | Expo-compatible, line charts |
-| Forms | `react-hook-form` + `zod` | Validation without boilerplate |
+| Framework | React Native (Expo Managed SDK 54) | Cross-platform, Snack & Expo Go compatibility |
+| Navigation | Expo Router + Universal `App.tsx` | Native tab routing + Snack simulator support |
+| State | React Context (`AppContext.tsx`) | Lightweight reactive state; zero boilerplate |
+| Storage | `@react-native-async-storage/async-storage` | 100% Local-First; zero account friction; offline |
+| Auth | ❌ None | Personal app — device UUID in AsyncStorage |
+| User ID | `AsyncStorage` UUID (`lib/uuid.ts`) | Stable device identifier without Auth SDK |
+| Charts | `react-native-gifted-charts` | Expo-compatible line charts |
+| Forms | `react-hook-form` + `zod` + `lib/zodResolver.ts` | Type-safe validation without subpath export issues |
+| Date Picker | `@react-native-community/datetimepicker` | Native modal calendar picker |
 | Styling | React Native `StyleSheet` API | Native, separated from logic — no NativeWind |
-| Icons | `@expo/vector-icons` | Included in Expo |
+| Icons | `@expo/vector-icons` | Built into Expo SDK |
 | Date | `date-fns` | Lightweight date formatting |
 
-> **Removed:** `nativewind`, `tailwindcss`, `firebase/auth`
+> **Removed:** `nativewind`, `tailwindcss`, `firebase`, `firebase/auth`, `@hookform/resolvers`
 
 ---
 

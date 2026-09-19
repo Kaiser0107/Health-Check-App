@@ -125,7 +125,7 @@ Component-based structure with the following screens:
 
 ## 7. DATA & STORAGE
 
-* Data is stored in **Firebase Firestore** (cloud sync for backup)
-* **No authentication required** — the app is personal; a UUID generated on first launch is used as the stable user identifier and stored in `AsyncStorage`
-* Firebase Auth SDK is **not used**
-* **Settings**
+* Storage is **100% Local-First** using `@react-native-async-storage/async-storage`.
+* **Zero authentication friction** — the app is strictly personal; a UUID is generated on first launch and stored in `AsyncStorage`.
+* **Zero cloud/Firebase runtime dependencies** — ensures instant launch, full offline reliability, and 100% seamless compatibility with Expo Snack and Expo Go.
+* Data export/clear functionality managed via the Settings screen.

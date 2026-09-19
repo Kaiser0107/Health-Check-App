@@ -158,25 +158,28 @@ npm install react-native-gifted-charts
 > **No design — plain `<View>` and `<Text>` only.**
 
 ### Considerations
-- Form uses `react-hook-form` + zod resolver — no manual `useState` per field
-- On mount: read from Firestore → populate form defaults
-- On submit: validate → save to Firestore via `saveMyInfo` → show success `Alert`
+- Form uses `react-hook-form` + self-contained `lib/zodResolver.ts` — no external resolver package or subpath resolution issues
+- On mount: read from `AsyncStorage` via `useMyInfo` → populate form defaults
+- On submit: validate → save to `AsyncStorage` via `updateMyInfo` → show success `Alert`
 - All fields are optional on first open (user may not have set them yet)
 - The `InputField` shared component is created here — it will be reused everywhere
+- Sex field uses interactive Male/Female chips
+- Date of Birth uses native modal calendar selector (`@react-native-community/datetimepicker`) with auto-age computation
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
 | 3.1 | Build `InputField` component (unstyled) | `components/ui/InputField.tsx` | ✅ |
-| 3.2 | Build `MyInfoForm` component | `components/forms/MyInfoForm.tsx` | ✅ |
+| 3.2 | Build `MyInfoForm` component (Male/Female chips, DatePicker) | `components/forms/MyInfoForm.tsx` | ✅ |
 | 3.3 | Wire `my-info.tsx` screen — load + save | `app/(tabs)/my-info.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [x] All 6 fields render correctly
+- [x] All 6 fields render correctly (Full Name, Age, Sex, Date of Birth, Contact Number, Address)
 - [x] Submitting with empty required fields shows inline validation errors
-- [x] Valid data saves to local storage (and syncs to Firestore if configured)
+- [x] Valid data saves to local storage (`AsyncStorage`)
 - [x] Reopening the screen loads previously saved data into form fields
+- [x] Verified working in Expo Snack and local environment
 - [x] No TypeScript errors (`npx tsc --noEmit` passed cleanly)
 
 ---
@@ -185,33 +188,34 @@ npm install react-native-gifted-charts
 
 ## Milestone 4 — Log Health Screen
 
-> **Goal:** A working, unstyled health data entry form. All 7 vitals log to Firestore. BMI auto-calculates as weight and height change.
-> **No design — plain `<View>` and `<Text>` only.**
+> **Goal:** A working health data entry form. All 7 vitals log to `AsyncStorage`. BMI auto-calculates as weight and height change.
+> **Clean functional layout using React Native `StyleSheet`.**
 
 ### Considerations
-- BMI is **not a user input** — it is calculated from weight + height and stored alongside the record
-- Blood pressure is two separate numeric inputs (Systolic / Diastolic) composed into one `BloodPressureInput` component
-- Blood sugar type is a simple selector (`Fasting` / `Random` / `Other`) — use `Picker` or basic `TouchableOpacity` buttons for now
-- On submit: validate → compute BMI → add record to Firestore → reset form → show success `Alert`
-- Height field: if the user has logged it before, pre-fill from the last record to save repetitive entry
+- BMI is **not a manual user input** — it is calculated automatically from weight (kg) + height (cm) using `lib/bmi.ts` and stored alongside the record
+- Blood pressure is two separate numeric inputs (Systolic / Diastolic)
+- Blood sugar type is an interactive selector (`Fasting` / `Random` / `Other`)
+- Form validation uses `HealthRecordSchema` and `lib/zodResolver.ts`
+- On submit: validate → compute BMI & status → add record to `AsyncStorage` via `useHealthData` → reset form → show success `Alert`
+- Verified compatible with Expo Snack and Expo Go
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 4.1 | Build `BloodPressureInput` component | `components/forms/BloodPressureInput.tsx` | ⬜ |
-| 4.2 | Build `HealthDataForm` component | `components/forms/HealthDataForm.tsx` | ⬜ |
-| 4.3 | Integrate `useBMI` — show live BMI preview | `components/forms/HealthDataForm.tsx` | ⬜ |
-| 4.4 | Wire `log-health.tsx` screen | `app/(tabs)/log-health.tsx` | ⬜ |
+| 4.1 | Build `HealthDataForm` component with all 7 vitals | `components/forms/HealthDataForm.tsx` | ⬜ |
+| 4.2 | Integrate `useBMI` — show live interactive BMI preview & category | `components/forms/HealthDataForm.tsx` | ⬜ |
+| 4.3 | Wire `log-health.tsx` screen with `useHealthData` | `app/(tabs)/log-health.tsx` | ⬜ |
 
 ### Verify Before Moving On
 - [ ] All 7 vitals accept valid input and reject invalid input (e.g. negative heart rate)
-- [ ] Blood pressure dual input feeds both values into the same form record
+- [ ] Blood pressure dual inputs feed both values into the same form record
 - [ ] BMI display updates as weight or height changes (live preview)
-- [ ] Blood sugar type selector works (one of 3 options selectable)
-- [ ] Submitting saves a complete record to Firestore (verify in Firebase Console)
+- [ ] Blood sugar type selector works (Fasting / Random / Other)
+- [ ] Submitting saves a complete record to `AsyncStorage`
 - [ ] Record includes auto-computed `bmi` field
 - [ ] Form resets after successful submit
+- [ ] Verified running cleanly in Expo Snack and local Expo Go
 - [ ] No TypeScript errors
 
 ---

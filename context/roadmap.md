@@ -58,6 +58,7 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 - UUID must survive app restarts — stored in `AsyncStorage` on first launch
 - `google-services.json` added to `.gitignore` immediately
 - Root `App.tsx` provides universal tab navigation for Expo Snack; 0-byte gitkeep files removed to ensure clean Snack git import
+- Downgraded project to Expo SDK 54 (`expo@~54.0.37`, React 19.1.0, React Native 0.81.5) for native 100% compatibility with Expo Snack and local Expo Go
 
 ### Tasks
 

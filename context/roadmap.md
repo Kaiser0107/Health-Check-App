@@ -34,7 +34,7 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | 1 | Project Bootstrap | Expo + folders + Firebase + UUID + tabs | ✅ Done |
 | 2 | Data & Logic Layer | Schemas, BMI, thresholds, Storage/Firestore helpers, Context | ✅ Done |
 | 3 | My Info Screen | Profile form — save & load from storage | ✅ Done |
-| 4 | Log Health Screen | Vitals form — BMI auto-calc — save record | ⬜ Not Started |
+| 4 | Log Health Screen | Vitals form — BMI auto-calc — save record | ✅ Done |
 | 5 | Dashboard Screen | Read latest record — display vitals + status | ⬜ Not Started |
 | 6 | History Screen | List past records — timestamps — no charts yet | ⬜ Not Started |
 | 7 | Settings Screen | Clear all data — about info | ⬜ Not Started |
@@ -203,20 +203,20 @@ npm install react-native-gifted-charts
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 4.1 | Build `HealthDataForm` component with all 7 vitals | `components/forms/HealthDataForm.tsx` | ⬜ |
-| 4.2 | Integrate `useBMI` — show live interactive BMI preview & category | `components/forms/HealthDataForm.tsx` | ⬜ |
-| 4.3 | Wire `log-health.tsx` screen with `useHealthData` | `app/(tabs)/log-health.tsx` | ⬜ |
+| 4.1 | Build `LogHealthForm` component with all 7 vitals | `components/forms/LogHealthForm.tsx` | ✅ |
+| 4.2 | Integrate `useBMI` — show live interactive BMI preview & category | `components/forms/LogHealthForm.tsx` | ✅ |
+| 4.3 | Wire `log-health.tsx` screen with `useHealthData` | `app/(tabs)/log-health.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [ ] All 7 vitals accept valid input and reject invalid input (e.g. negative heart rate)
-- [ ] Blood pressure dual inputs feed both values into the same form record
-- [ ] BMI display updates as weight or height changes (live preview)
-- [ ] Blood sugar type selector works (Fasting / Random / Other)
-- [ ] Submitting saves a complete record to `AsyncStorage`
-- [ ] Record includes auto-computed `bmi` field
-- [ ] Form resets after successful submit
-- [ ] Verified running cleanly in Expo Snack and local Expo Go
-- [ ] No TypeScript errors
+- [x] All 7 vitals accept valid input and reject invalid input (e.g. negative heart rate)
+- [x] Blood pressure dual inputs feed both values into the same form record
+- [x] BMI display updates as weight or height changes (live preview)
+- [x] Blood sugar type selector works (Fasting / Random / Other)
+- [x] Submitting saves a complete record to `AsyncStorage`
+- [x] Record includes auto-computed `bmi` field
+- [x] Form resets after successful submit
+- [x] Verified running cleanly in Expo Snack and local Expo Go
+- [x] No TypeScript errors (`npx tsc --noEmit` passed cleanly)
 
 ---
 

@@ -66,4 +66,49 @@ export const HealthRecordSchema = z.object({
 
 export type HealthRecord = z.infer<typeof HealthRecordSchema>;
 
+export const LogHealthInputSchema = z
+  .object({
+    heartRate: z.coerce
+      .number({ message: 'Heart rate must be a number' })
+      .min(30, 'Heart rate must be at least 30 BPM')
+      .max(250, 'Heart rate must be under 250 BPM'),
+    systolic: z.coerce
+      .number({ message: 'Systolic BP must be a number' })
+      .min(50, 'Systolic BP must be at least 50 mmHg')
+      .max(260, 'Systolic BP must be under 260 mmHg'),
+    diastolic: z.coerce
+      .number({ message: 'Diastolic BP must be a number' })
+      .min(30, 'Diastolic BP must be at least 30 mmHg')
+      .max(180, 'Diastolic BP must be under 180 mmHg'),
+    temperature: z.coerce
+      .number({ message: 'Temperature must be a number' })
+      .min(30, 'Temperature must be at least 30°C')
+      .max(45, 'Temperature must be under 45°C'),
+    oxygenLevel: z.coerce
+      .number({ message: 'Oxygen level must be a number' })
+      .min(50, 'SpO2 must be at least 50%')
+      .max(100, 'SpO2 cannot exceed 100%'),
+    weight: z.coerce
+      .number({ message: 'Weight must be a number' })
+      .min(10, 'Weight must be at least 10 kg')
+      .max(400, 'Weight must be under 400 kg'),
+    height: z.coerce
+      .number({ message: 'Height must be a number' })
+      .min(50, 'Height must be at least 50 cm')
+      .max(260, 'Height must be under 260 cm'),
+    bloodSugar: z.coerce
+      .number({ message: 'Blood sugar must be a number' })
+      .min(20, 'Blood sugar must be at least 20 mg/dL')
+      .max(600, 'Blood sugar must be under 600 mg/dL'),
+    bloodSugarType: BloodSugarTypeEnum,
+  })
+  .refine((data) => data.systolic > data.diastolic, {
+    message: 'Systolic must be higher than diastolic',
+    path: ['systolic'],
+  });
+
+export type LogHealthData = z.infer<typeof LogHealthInputSchema>;
+export type LogHealthInput = z.input<typeof LogHealthInputSchema>;
+
 export type VitalStatus = 'normal' | 'warning' | 'critical';
+

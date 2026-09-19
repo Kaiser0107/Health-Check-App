@@ -69,9 +69,9 @@ Every subsequent launch:
 ## Success Criteria
 
 - [x] Personal profile (My Info) fully editable with all 6 fields (Male/Female gender chips, native calendar selector)
-- [ ] Health data entry covers all 7 vitals (Heart Rate, BP, Temp, SpO₂, Weight, Height, Blood Sugar)
-- [ ] BMI auto-calculates and updates reactively on weight/height change
-- [ ] BMI category label (Underweight / Normal / Overweight / Obese) displays correctly
+- [x] Health data entry covers all 7 vitals (Heart Rate, BP, Temp, SpO₂, Weight, Height, Blood Sugar)
+- [x] BMI auto-calculates and updates reactively on weight/height change
+- [x] BMI category label (Underweight / Normal / Overweight / Obese) displays correctly
 - [ ] Dashboard shows cards for every vital with colour-coded status
 - [ ] Health History shows past records with a line chart per vital
 - [x] All records persist to AsyncStorage and survive app restart (100% Local-First)

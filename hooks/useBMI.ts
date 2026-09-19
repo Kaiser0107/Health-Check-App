@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { calculateBMI, getBMICategory, getBMIStatus } from '@/lib/bmi';
-import { BMICategory, VitalStatus } from '@/schemas/health.schema';
+import { calculateBMI, getBMICategory, getBMIStatus } from '../lib/bmi';
+import { BMICategory, VitalStatus } from '../schemas/health.schema';
 
 interface UseBMIOptions {
   weightKg?: number;

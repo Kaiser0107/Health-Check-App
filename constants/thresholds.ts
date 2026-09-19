@@ -1,4 +1,4 @@
-import { BloodSugarType, HealthRecord, VitalStatus } from '@/schemas/health.schema';
+import { BloodSugarType, HealthRecord, VitalStatus } from '../schemas/health.schema';
 
 export interface VitalThresholdConfig {
   unit: string;

@@ -1,5 +1,5 @@
-import { useApp } from '@/context/AppContext';
-import { MyInfo } from '@/schemas/health.schema';
+import { useApp } from '../context/AppContext';
+import { MyInfo } from '../schemas/health.schema';
 
 /**
  * Hook for accessing and updating the user's personal profile info.

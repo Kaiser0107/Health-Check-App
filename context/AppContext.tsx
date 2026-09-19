@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode, useCallback } from 'react';
-import { HealthRecord, MyInfo } from '@/schemas/health.schema';
-import { getOrCreateUUID } from '@/lib/uuid';
+import { HealthRecord, MyInfo } from '../schemas/health.schema';
+import { getOrCreateUUID } from '../lib/uuid';
 import {
   getLocalMyInfo,
   saveLocalMyInfo,
@@ -8,15 +8,15 @@ import {
   addLocalRecord,
   deleteLocalRecord,
   clearAllLocalData,
-} from '@/lib/storage';
+} from '../lib/storage';
 import {
   syncSaveMyInfo,
   syncAddRecord,
   syncDeleteAllData,
   syncGetMyInfo,
   syncGetRecords,
-} from '@/lib/firestore';
-import { isFirebaseConfigured } from '@/lib/firebase';
+} from '../lib/firestore';
+import { isFirebaseConfigured } from '../lib/firebase';
 
 interface AppContextValue {
   uuid: string | null;

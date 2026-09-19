@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useMyInfo } from '@/hooks/useMyInfo';
-import { MyInfoForm } from '@/components/forms/MyInfoForm';
+import { useMyInfo } from '../../hooks/useMyInfo';
+import { MyInfoForm } from '../../components/forms/MyInfoForm';
 
 export default function MyInfoScreen() {
   const { myInfo, updateMyInfo, isLoading, isSaving } = useMyInfo();

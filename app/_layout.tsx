@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AppProvider } from '@/context/AppContext';
-import { getOrCreateUUID } from '@/lib/uuid';
+import { AppProvider } from '../context/AppContext';
+import { getOrCreateUUID } from '../lib/uuid';
 
 export default function RootLayout() {
   useEffect(() => {

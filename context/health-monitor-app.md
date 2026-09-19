@@ -36,8 +36,8 @@ Phase 4A (Bootstrap)  →  Phase 4B (Logic Layer)  →  Phase 4C (Navigation She
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Platform | React Native + Expo Managed (Expo Go) | Easiest setup, no native code needed |
-| Backend / Storage | Local-First (`AsyncStorage`) + Optional Firestore | Zero setup needed to run immediately; works offline and on Expo Snack; optional cloud sync |
+| Platform | React Native + Expo Managed (Expo Go & Snack) | Easiest setup, SDK 54 compatibility, no native code needed |
+| Backend / Storage | 100% Local-First (`AsyncStorage`) | Zero setup needed to run immediately; works offline and on Expo Snack with 0 runtime dependencies |
 | User ID | UUID generated on first launch, stored in `AsyncStorage` | Stable device identifier without Auth SDK |
 | Styling | React Native `StyleSheet` API | Separated from logic; no utility-class library |
 | Build order | Skeleton-first, design second | Correct logic before visual polish |

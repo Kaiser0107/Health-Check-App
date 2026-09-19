@@ -1,6 +1,6 @@
-import { useApp } from '@/context/AppContext';
-import { HealthRecord } from '@/schemas/health.schema';
-import { getOverallHealthStatus } from '@/constants/thresholds';
+import { useApp } from '../context/AppContext';
+import { HealthRecord } from '../schemas/health.schema';
+import { getOverallHealthStatus } from '../constants/thresholds';
 import { useMemo } from 'react';
 
 /**

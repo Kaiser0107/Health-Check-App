@@ -1,4 +1,4 @@
-import { BMICategory, VitalStatus } from '@/schemas/health.schema';
+import { BMICategory, VitalStatus } from '../schemas/health.schema';
 
 /**
  * Calculate Body Mass Index (BMI).

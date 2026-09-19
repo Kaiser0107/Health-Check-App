@@ -54,10 +54,11 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 ### Considerations
 - Use `blank-typescript` Expo template (not `tabs` — we build the tab layout ourselves for full control)
 - Expo Router requires `expo-router` package + `scheme` in `app.json`
-- Firebase JS SDK v9+ (modular) — do **not** use the compat API
+- Storage is 100% Local-First (`AsyncStorage`) — `firebase` runtime dependency removed to ensure full Expo Snack compatibility
 - UUID must survive app restarts — stored in `AsyncStorage` on first launch
 - `google-services.json` added to `.gitignore` immediately
 - Root `App.tsx` provides universal tab navigation for Expo Snack; 0-byte gitkeep files removed to ensure clean Snack git import
+- All imports use standard relative paths (`../` or `./`) because Expo Snack packager does not support TypeScript path aliases (`@/`)
 - Downgraded project to Expo SDK 54 (`expo@~54.0.37`, React 19.1.0, React Native 0.81.5) for native 100% compatibility with Expo Snack and local Expo Go
 
 ### Tasks

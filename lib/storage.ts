@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { HealthRecord, MyInfo } from '@/schemas/health.schema';
+import { HealthRecord, MyInfo } from '../schemas/health.schema';
 
 const STORAGE_KEYS = {
   MY_INFO: '@health_check:my_info',

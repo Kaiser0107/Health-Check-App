@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import {
 import { InputField } from '../ui/InputField';
 import { useBMI } from '../../hooks/useBMI';
 
-interface LogHealthFormProps {
+export interface LogHealthFormProps {
   defaultHeight?: number;
   onSubmit: (data: LogHealthData) => Promise<void>;
   isSaving?: boolean;
@@ -36,21 +36,29 @@ export const LogHealthForm: React.FC<LogHealthFormProps> = ({
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<LogHealthInput, any, LogHealthData>({
     resolver: zodResolver(LogHealthInputSchema),
     defaultValues: {
-      heartRate: undefined as any,
-      systolic: undefined as any,
-      diastolic: undefined as any,
-      temperature: undefined as any,
-      oxygenLevel: undefined as any,
-      weight: undefined as any,
-      height: defaultHeight ? String(defaultHeight) : ('' as any),
-      bloodSugar: undefined as any,
+      heartRate: '',
+      systolic: '',
+      diastolic: '',
+      temperature: '',
+      oxygenLevel: '',
+      weight: '',
+      height: defaultHeight ? String(defaultHeight) : '',
+      bloodSugar: '',
       bloodSugarType: 'Fasting',
     },
   });
+
+  // Populate default height if loaded asynchronously
+  useEffect(() => {
+    if (defaultHeight && !watch('height')) {
+      setValue('height', String(defaultHeight));
+    }
+  }, [defaultHeight, setValue]);
 
   // Watch weight and height for real-time BMI computation
   const watchedWeight = watch('weight');
@@ -82,14 +90,14 @@ export const LogHealthForm: React.FC<LogHealthFormProps> = ({
   const handleFormSubmit = async (data: LogHealthData) => {
     await onSubmit(data);
     reset({
-      heartRate: '' as any,
-      systolic: '' as any,
-      diastolic: '' as any,
-      temperature: '' as any,
-      oxygenLevel: '' as any,
-      weight: '' as any,
-      height: defaultHeight ? String(defaultHeight) : ('' as any),
-      bloodSugar: '' as any,
+      heartRate: '',
+      systolic: '',
+      diastolic: '',
+      temperature: '',
+      oxygenLevel: '',
+      weight: '',
+      height: defaultHeight ? String(defaultHeight) : '',
+      bloodSugar: '',
       bloodSugarType: 'Fasting',
     });
   };
@@ -169,7 +177,7 @@ export const LogHealthForm: React.FC<LogHealthFormProps> = ({
             name="temperature"
             render={({ field: { onChange, onBlur, value } }) => (
               <InputField
-                label="Temperature (°C)"
+                label="Temperature (C)"
                 value={value !== undefined && value !== null ? String(value) : ''}
                 onChangeText={onChange}
                 onBlur={onBlur}
@@ -189,7 +197,7 @@ export const LogHealthForm: React.FC<LogHealthFormProps> = ({
             name="oxygenLevel"
             render={({ field: { onChange, onBlur, value } }) => (
               <InputField
-                label="Oxygen (SpO₂ %)"
+                label="Oxygen (SpO2 %)"
                 value={value !== undefined && value !== null ? String(value) : ''}
                 onChangeText={onChange}
                 onBlur={onBlur}
@@ -246,14 +254,19 @@ export const LogHealthForm: React.FC<LogHealthFormProps> = ({
       {/* Live Interactive BMI Preview Card */}
       <View style={[styles.bmiCard, { borderColor: badgeStyle.border }]}>
         <View style={styles.bmiHeader}>
-          <Ionicons name="speedometer-outline" size={20} color="#0284c7" />
+          <Ionicons
+            name="speedometer-outline"
+            size={20}
+            color="#0284c7"
+            style={styles.bmiIcon}
+          />
           <Text style={styles.bmiTitle}>Live BMI Calculation</Text>
         </View>
 
         <View style={styles.bmiBody}>
           <View>
             <Text style={styles.bmiValue}>{formattedBMI}</Text>
-            <Text style={styles.bmiUnit}>kg/m²</Text>
+            <Text style={styles.bmiUnit}>kg/m2</Text>
           </View>
 
           <View
@@ -263,7 +276,7 @@ export const LogHealthForm: React.FC<LogHealthFormProps> = ({
             ]}
           >
             <Text style={[styles.categoryText, { color: badgeStyle.text }]}>
-              {isValid ? category : 'Enter Weight & Height'}
+              {isValid ? category : 'Enter Weight and Height'}
             </Text>
           </View>
         </View>
@@ -340,7 +353,12 @@ export const LogHealthForm: React.FC<LogHealthFormProps> = ({
           <ActivityIndicator color="#ffffff" size="small" />
         ) : (
           <View style={styles.submitContent}>
-            <Ionicons name="checkmark-circle-outline" size={20} color="#ffffff" />
+            <Ionicons
+              name="checkmark-circle-outline"
+              size={20}
+              color="#ffffff"
+              style={styles.submitIcon}
+            />
             <Text style={styles.submitText}>Save Health Record</Text>
           </View>
         )}
@@ -349,7 +367,9 @@ export const LogHealthForm: React.FC<LogHealthFormProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+export default LogHealthForm;
+
+const styles: any = StyleSheet.create({
   formContainer: {
     paddingHorizontal: 16,
     paddingVertical: 20,
@@ -394,8 +414,10 @@ const styles = StyleSheet.create({
   bmiHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
     marginBottom: 10,
+  },
+  bmiIcon: {
+    marginRight: 6,
   },
   bmiTitle: {
     fontSize: 14,
@@ -443,7 +465,7 @@ const styles = StyleSheet.create({
   },
   chipRow: {
     flexDirection: 'row',
-    gap: 10,
+    marginHorizontal: -4,
   },
   sugarChip: {
     flex: 1,
@@ -454,6 +476,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     justifyContent: 'center',
     alignItems: 'center',
+    marginHorizontal: 4,
   },
   sugarChipSelected: {
     backgroundColor: '#0284c7',
@@ -488,7 +511,9 @@ const styles = StyleSheet.create({
   submitContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+  },
+  submitIcon: {
+    marginRight: 8,
   },
   submitText: {
     color: '#ffffff',

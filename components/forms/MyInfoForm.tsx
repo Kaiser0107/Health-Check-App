@@ -10,7 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { zodResolver } from '../../lib/zodResolver';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { MyInfo, MyInfoInput, MyInfoSchema } from '../../schemas/health.schema';

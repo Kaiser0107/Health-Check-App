@@ -57,6 +57,7 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 - Firebase JS SDK v9+ (modular) — do **not** use the compat API
 - UUID must survive app restarts — stored in `AsyncStorage` on first launch
 - `google-services.json` added to `.gitignore` immediately
+- Root `App.tsx` provides universal tab navigation for Expo Snack; 0-byte gitkeep files removed to ensure clean Snack git import
 
 ### Tasks
 

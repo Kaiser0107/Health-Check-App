@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const MyInfoSchema = z.object({
   patientId: z.string().optional(),
+  profilePicture: z.string().optional(), // base64 data URI stored locally
   fullName: z.string().min(1, 'Full name is required'),
   age: z.coerce
     .number({ message: 'Please enter a valid age' })

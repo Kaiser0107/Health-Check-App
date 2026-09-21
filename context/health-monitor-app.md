@@ -1,7 +1,7 @@
 # Patient Health Monitoring App — Project Plan
 
 > **File:** `context/health-monitor-app.md`
-> **Created:** 2026-09-18 | **Updated:** 2026-09-19
+> **Created:** 2026-09-18 | **Updated:** 2026-09-21
 > **Status:** APPROVED — Build in progress (see roadmap)
 >
 > 📌 Related files:
@@ -46,6 +46,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Platform | React Native + Expo Managed (Expo Go & Snack) | Easiest setup, SDK 54 compatibility, cross-platform |
 | Backend / Storage | 100% Local-First (`AsyncStorage`) | Zero setup needed to run immediately; works offline and on Expo Snack with 0 runtime dependencies |
 | Patient ID | Captured in Patient Info Form | Allows unique tracking of patient records |
+| Profile Picture | `expo-image-picker` (camera + photo library) stored as base64 URI in `AsyncStorage` | No server upload needed; local-first; Snack-compatible |
 | Device UUID | UUID generated on first launch, stored in `AsyncStorage` | Internal stable device/instance identifier |
 | Styling | React Native `StyleSheet` API | Separated from logic; no utility-class library |
 | Build order | Skeleton-first, design second | Correct logic before visual polish |
@@ -65,6 +66,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 ## Success Criteria
 
 - [x] Patient profile (Patient Information) fully editable with all fields (Patient ID, Full Name, Age, Sex, Date of Birth, Contact, Address)
+- [x] Patient profile picture: camera / photo library picker with circular avatar display
 - [x] Health data entry covers all 7 vitals (Heart Rate, BP, Temp, SpO2, Weight, Height, Blood Sugar)
 - [x] BMI auto-calculates and updates reactively on weight/height change
 - [x] BMI category label (Underweight / Normal / Overweight / Obese) displays correctly
@@ -90,6 +92,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Charts | `react-native-gifted-charts` | Expo-compatible line charts |
 | Forms | `react-hook-form` + `zod` + `lib/zodResolver.ts` | Type-safe validation without subpath export issues |
 | Date Picker | `@react-native-community/datetimepicker` | Native modal calendar picker |
+| Image Picker | `expo-image-picker` | Camera + photo library access for profile picture |
 | Styling | React Native `StyleSheet` API | Native, separated from logic — no NativeWind |
 | Icons | `@expo/vector-icons` | Built into Expo SDK |
 | Date | `date-fns` | Lightweight date formatting |

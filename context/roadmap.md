@@ -160,7 +160,8 @@ npm install react-native-gifted-charts
 ### Considerations
 - Form uses `react-hook-form` + self-contained `lib/zodResolver.ts` — no external resolver package or subpath resolution issues
 - Captures core patient demographics: Patient ID, Full Name, Age, Sex, Date of Birth, Contact Number, Address
-- On mount: read from `AsyncStorage` via `useMyInfo` → populate form defaults
+- **Profile picture**: `expo-image-picker` (bundled in SDK 54, no extra install) — camera or photo library, stored as base64 URI in `MyInfoSchema.profilePicture`
+- On mount: read from `AsyncStorage` via `useMyInfo` → populate form defaults (including profile picture URI)
 - On submit: validate → save to `AsyncStorage` via `updateMyInfo` → show success `Alert`
 - The `InputField` shared component is created here — it will be reused everywhere
 - Sex field uses interactive Male/Female chips
@@ -173,9 +174,16 @@ npm install react-native-gifted-charts
 | 3.1 | Build `InputField` component (unstyled) | `components/ui/InputField.tsx` | ✅ |
 | 3.2 | Build `MyInfoForm` / `PatientInfoForm` component | `components/forms/MyInfoForm.tsx` | ✅ |
 | 3.3 | Wire `my-info.tsx` screen — load + save | `app/(tabs)/my-info.tsx` | ✅ |
+| 3.4 | Add `profilePicture` field to `MyInfoSchema` | `schemas/health.schema.ts` | ✅ |
+| 3.5 | Add circular avatar with camera/library picker to `MyInfoForm` | `components/forms/MyInfoForm.tsx` | ✅ |
 
 ### Verify Before Moving On
 - [x] All fields render correctly (Patient ID, Full Name, Age, Sex, Date of Birth, Contact Number, Address)
+- [x] Profile picture avatar shows at top of form with camera badge overlay
+- [x] Tapping avatar opens action sheet (Camera / Photo Library / Cancel)
+- [x] Selected photo appears as circular avatar immediately
+- [x] Profile picture is saved alongside other patient data in AsyncStorage
+- [x] Reopening the screen restores the profile picture from storage
 - [x] Submitting with empty required fields shows inline validation errors
 - [x] Valid data saves to local storage (`AsyncStorage`)
 - [x] Reopening the screen loads previously saved data into form fields

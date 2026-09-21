@@ -46,3 +46,12 @@ Thumbs.db
 *.swo
 *.sublime-project
 *.sublime-workspace
+
+# Graphify (Local knowledge graph & tool integration - restricted from repo)
+graphify-out/
+.graphify/
+.graphify*
+*.graphify*
+.agents/
+.agent/rules/graphify.md
+.agent/workflows/graphify.md

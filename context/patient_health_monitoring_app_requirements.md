@@ -1,6 +1,6 @@
 # Patient Health Monitoring App — Requirements
 
-> **Updated:** 2026-09-19
+> **Updated:** 2026-09-21
 > **Specification Reference:** Specifications aligned directly with original `health.pdf` requirements.
 >
 > 📌 Related files:
@@ -27,6 +27,7 @@ The interface is clean, responsive, easy to understand, and optimized for mobile
 
 Provide editable fields for:
 
+* **Profile Picture** (Camera capture or photo library picker — displayed as a circular avatar on the patient profile)
 * **Patient ID** (Identification code / hospital or school record number)
 * **Full Name**
 * **Age** (Auto-calculated from Date of Birth or manually editable)
@@ -35,7 +36,7 @@ Provide editable fields for:
 * **Contact Number**
 * **Address**
 
-Include an **Edit Patient Information** function allowing the user (patient, caregiver, teacher, or nurse) to modify previously recorded patient details.
+Include an **Edit Patient Information** function allowing the user (patient, caregiver, teacher, or nurse) to modify previously recorded patient details, including replacing the profile picture.
 
 ---
 
@@ -111,6 +112,7 @@ Component-based structure with the following screens:
   * Overall Health Status (Normal / Warning / Critical)
   * Vital Cards: Heart Rate, Blood Pressure, Temperature, Oxygen Level, Weight, BMI, Blood Sugar
 * **Patient Info** (Patient Profile)
+  * Circular profile picture avatar (camera / photo library picker)
   * Patient ID, Name, Age, Sex, Date of Birth, Contact Number, Address
 * **Log Health** (Health Data Form)
   * Inputs for all 7 vitals + Blood Sugar Type selector

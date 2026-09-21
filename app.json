@@ -19,7 +19,14 @@
     },
     "plugins": [
       "expo-router",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Health Check to access your photo library to set a patient profile photo.",
+          "cameraPermission": "Allow Health Check to access your camera to take a patient profile photo."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

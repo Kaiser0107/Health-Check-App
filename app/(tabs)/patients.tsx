@@ -72,24 +72,36 @@ export default function PatientsScreen() {
 
   const handleDeletePatient = useCallback(
     (patient: PatientSummary) => {
-      Alert.alert(
-        'Delete Patient',
-        `Are you sure you want to delete all data for ${patient.fullName}? This cannot be undone.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await deletePatient(patient.uid);
-              } catch (err: any) {
-                Alert.alert('Error', err?.message || 'Failed to delete patient');
-              }
+      const doDelete = async () => {
+        try {
+          await deletePatient(patient.uid);
+        } catch (err: any) {
+          if (Platform.OS === 'web') {
+            window.alert(err?.message || 'Failed to delete patient');
+          } else {
+            Alert.alert('Error', err?.message || 'Failed to delete patient');
+          }
+        }
+      };
+
+      if (Platform.OS === 'web') {
+        if (window.confirm(`Are you sure you want to delete all data for ${patient.fullName}? This cannot be undone.`)) {
+          doDelete();
+        }
+      } else {
+        Alert.alert(
+          'Delete Patient',
+          `Are you sure you want to delete all data for ${patient.fullName}? This cannot be undone.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Delete',
+              style: 'destructive',
+              onPress: doDelete,
             },
-          },
-        ]
-      );
+          ]
+        );
+      }
     },
     [deletePatient]
   );
@@ -129,16 +141,23 @@ export default function PatientsScreen() {
       setModalVisible(false);
       resetForm();
 
-      Alert.alert('Success', `Patient ${newInfo.fullName} has been registered!`, [
-        {
-          text: 'Select & View Dashboard',
-          onPress: async () => {
-            await selectPatient(newId);
-            router.push('/(tabs)');
+      if (Platform.OS === 'web') {
+        if (window.confirm(`Patient ${newInfo.fullName} has been registered!\n\nClick OK to view their dashboard, or Cancel to stay here.`)) {
+          await selectPatient(newId);
+          router.push('/(tabs)');
+        }
+      } else {
+        Alert.alert('Success', `Patient ${newInfo.fullName} has been registered!`, [
+          {
+            text: 'Select & View Dashboard',
+            onPress: async () => {
+              await selectPatient(newId);
+              router.push('/(tabs)');
+            },
           },
-        },
-        { text: 'OK', style: 'cancel' },
-      ]);
+          { text: 'OK', style: 'cancel' },
+        ]);
+      }
     } catch (err: any) {
       setFormError(err?.message || 'Failed to create patient.');
     }

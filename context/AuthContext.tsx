@@ -30,8 +30,8 @@ interface AuthContextValue {
   isAdmin: boolean;
   isLoading: boolean;
   authError: string | null;
-  signIn: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<AppUser>;
+  register: (username: string, password: string) => Promise<AppUser>;
   signOut: () => Promise<void>;
   clearAuthError: () => void;
 }
@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthError(null);
       const appUser = await authSignIn(username, password);
       setUser(appUser);
+      return appUser;
     } catch (err: any) {
       setAuthError(mapFirebaseError(err.code));
       throw err;
@@ -86,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthError(null);
       const appUser = await authRegister(username, password);
       setUser(appUser);
+      return appUser;
     } catch (err: any) {
       setAuthError(mapFirebaseError(err.code));
       throw err;

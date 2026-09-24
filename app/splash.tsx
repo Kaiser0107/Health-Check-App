@@ -3,14 +3,15 @@
  * The logo drops into the center of the screen, then the app
  * checks auth state and navigates to the appropriate route.
  */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 
 export default function SplashScreen() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isAdmin, isLoading } = useAuth();
+  const [animationDone, setAnimationDone] = useState(false);
 
   const dropAnim = useRef(new Animated.Value(-160)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -34,20 +35,23 @@ export default function SplashScreen() {
       // Hold for a moment after landing
       Animated.delay(800),
     ]).start(() => {
-      // Navigate based on auth state (only after animation completes)
-      if (!isLoading) {
-        router.replace((user ? '/(tabs)' : '/login') as any);
-      }
+      setAnimationDone(true);
     });
   }, []);
 
-  // If auth resolves while animation is still running, navigate on the
-  // next animation completion. If it resolves after, navigate immediately.
   useEffect(() => {
-    if (!isLoading) {
-      // Give the animation at least 1.5s before cutting to the next screen
+    if (animationDone && !isLoading) {
+      if (user) {
+        if (isAdmin) {
+          router.replace('/(tabs)/patients' as any);
+        } else {
+          router.replace('/(tabs)' as any);
+        }
+      } else {
+        router.replace('/login' as any);
+      }
     }
-  }, [isLoading, user]);
+  }, [animationDone, isLoading, user, isAdmin]);
 
   return (
     <View style={styles.container}>

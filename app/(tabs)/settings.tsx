@@ -6,53 +6,85 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { isFirebaseConfigured } from '../../lib/firebase';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const { user, isAdmin, signOut } = useAuth();
   const { clearAllData, isSaving } = useApp();
 
+  const performSignOut = async () => {
+    try {
+      await signOut();
+      router.replace('/login');
+    } catch (err: any) {
+      if (Platform.OS === 'web') {
+        window.alert(err?.message || 'Failed to sign out');
+      } else {
+        Alert.alert('Error', err?.message || 'Failed to sign out');
+      }
+    }
+  };
+
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut();
-          } catch (err: any) {
-            Alert.alert('Error', err?.message || 'Failed to sign out');
-          }
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to sign out?')) {
+        performSignOut();
+      }
+    } else {
+      Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: performSignOut,
         },
-      },
-    ]);
+      ]);
+    }
+  };
+
+  const performClearCache = async () => {
+    try {
+      await clearAllData();
+      if (Platform.OS === 'web') {
+        window.alert('Local data cleared successfully.');
+      } else {
+        Alert.alert('Success', 'Local data cleared successfully.');
+      }
+    } catch (err: any) {
+      if (Platform.OS === 'web') {
+        window.alert(err?.message || 'Failed to clear local data');
+      } else {
+        Alert.alert('Error', err?.message || 'Failed to clear local data');
+      }
+    }
   };
 
   const handleClearCache = () => {
-    Alert.alert(
-      'Clear Local Data',
-      'This will reset your local data cache on this device. Cloud data is not affected.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear Data',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await clearAllData();
-              Alert.alert('Success', 'Local data cleared successfully.');
-            } catch (err: any) {
-              Alert.alert('Error', err?.message || 'Failed to clear local data');
-            }
+    if (Platform.OS === 'web') {
+      if (window.confirm('This will reset your local data cache on this device. Cloud data is not affected.')) {
+        performClearCache();
+      }
+    } else {
+      Alert.alert(
+        'Clear Local Data',
+        'This will reset your local data cache on this device. Cloud data is not affected.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Clear Data',
+            style: 'destructive',
+            onPress: performClearCache,
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const userInitial = user?.username ? user.username.charAt(0).toUpperCase() : '?';

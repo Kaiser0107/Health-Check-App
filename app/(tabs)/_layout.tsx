@@ -1,4 +1,5 @@
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 
@@ -22,7 +23,19 @@ function TabIcon({ name, focused, color, size }: TabIconProps) {
 }
 
 export default function TabLayout() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={layoutStyles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
 
   return (
     <Tabs
@@ -103,3 +116,13 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const layoutStyles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+});
+

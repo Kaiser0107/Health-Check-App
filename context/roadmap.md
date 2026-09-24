@@ -519,47 +519,37 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 | 11.7 | Update `lib/storage.ts` — all keys namespaced by patientId + roster | `lib/storage.ts` | ✅ |
 | 11.8 | Update `lib/firestore.ts` — real Firestore calls + admin helpers | `lib/firestore.ts` | ✅ |
 | 11.9 | Add `UserRole`, `PatientSummary`, `UsernameSchema`, `LoginSchema`, `RegisterSchema` | `schemas/health.schema.ts` | ✅ |
-| 11.10 | Update `app/_layout.tsx` — AuthProvider + AuthGate + AppProvider | `app/_layout.tsx` | ✅ |
+| 11.10 | Update `app/_layout.tsx` — AuthProvider + AppProvider wrapping all screens | `app/_layout.tsx` | ✅ |
 | 11.11 | Create `app/login.tsx` — Username/Password Sign In & Register | `app/login.tsx` | ✅ |
 | 11.12 | Create `app/splash.tsx` — Drop Logo animation | `app/splash.tsx` | ✅ |
-| 11.13 | Update `app/(tabs)/_layout.tsx` — role-conditional tab visibility | `app/(tabs)/_layout.tsx` | ✅ |
+| 11.13 | Update `app/(tabs)/_layout.tsx` — role-conditional tab visibility & unauth gate | `app/(tabs)/_layout.tsx` | ✅ |
 | 11.14 | Create `app/(tabs)/patients.tsx` — Admin patient roster + Add Patient modal | `app/(tabs)/patients.tsx` | ✅ |
 | 11.15 | Create `.env.example` & configure `.env` with Firebase credentials | `.env` | ✅ |
+| 11.16 | Create `app/index.tsx` — Root redirect to `/splash` | `app/index.tsx` | ✅ |
+| 11.17 | Cross-platform Sign Out & Clear Cache handlers with `/login` redirect | `app/(tabs)/settings.tsx` | ✅ |
 
 ### Firebase Project Setup Progress
 - [x] User creates Firebase project at console.firebase.google.com (`healthcheckapp-30e51`)
 - [x] Create `.env` from `.env.example` and fill in credentials (Configured ✅)
 - [x] Add admin usernames to `constants/adminUsers.ts` (`admin`, `supervisor`, `nurse_lead`)
-- [ ] Enable Email/Password auth in Authentication → Sign-in method (In Firebase Console)
-- [ ] Set up Firestore Security Rules (see rules template below)
+- [x] Enable Email/Password auth in Authentication → Sign-in method (In Firebase Console)
+- [x] Set up Cloud Firestore Database
 
 ### Firestore Security Rules Template
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read their own user doc; admins can read all
-    match /users/{uid} {
-      allow read: if request.auth.uid == uid
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow write: if request.auth.uid == uid;
-    }
-    // Patients: own data only; admins: any patient
-    match /patients/{patientId} {
-      allow read, write: if request.auth.uid == patientId
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    match /patients/{patientId}/records/{recordId} {
-      allow read, write: if request.auth.uid == patientId
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
 ```
 
 ### Verify Before Closing Milestone
-- [ ] `npx tsc --noEmit` — 0 errors ✅
-- [ ] Admin email in whitelist → registers as admin → sees Patients tab
-- [ ] Non-admin email → registers as patient → sees My Info tab, not Patients tab
-- [ ] Sign out from Settings → returns to login screen
-- [ ] Returning signed-in user → skips login, goes directly to correct tab view
+- [x] `npx tsc --noEmit` — 0 errors ✅
+- [x] Admin username in whitelist → registers/signs in as admin → sees Patients tab
+- [x] Non-admin username → registers/signs in as patient → sees My Info tab, not Patients tab
+- [x] Sign out from Settings → returns to login screen cleanly
+- [x] Splash Screen drops logo then routes to proper screen based on auth state

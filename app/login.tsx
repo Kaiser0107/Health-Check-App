@@ -60,12 +60,18 @@ export default function LoginScreen() {
     setSubmitting(true);
 
     try {
+      let loggedUser;
       if (mode === 'signin') {
-        await signIn(username.trim(), password);
+        loggedUser = await signIn(username.trim(), password);
       } else {
-        await register(username.trim(), password);
+        loggedUser = await register(username.trim(), password);
       }
-      // AuthGate in _layout.tsx automatically redirects upon authentication
+
+      if (loggedUser?.role === 'admin') {
+        router.replace('/(tabs)/patients' as any);
+      } else {
+        router.replace('/(tabs)' as any);
+      }
     } catch {
       // Error is set in AuthContext
     } finally {

@@ -1,10 +1,10 @@
 /**
  * Firebase initialization.
  * Config values are loaded from EXPO_PUBLIC_ environment variables.
- * Create a .env file in the project root with your Firebase project credentials.
+ * Uses inMemoryPersistence so browser refresh / reload cleanly resets session to Drop Logo -> Login.
  */
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, inMemoryPersistence, getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -19,6 +19,15 @@ const firebaseConfig = {
 // Prevent re-initialization on hot reload
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
+export const auth = (() => {
+  try {
+    return initializeAuth(app, {
+      persistence: inMemoryPersistence,
+    });
+  } catch {
+    return getAuth(app);
+  }
+})();
+
 export const db = getFirestore(app);
 export const isFirebaseConfigured = Boolean(process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID);

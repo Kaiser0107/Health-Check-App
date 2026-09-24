@@ -1,29 +1,33 @@
 import React, { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import { Stack, useRouter, usePathname } from 'expo-router';
+import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { AppProvider } from '../context/AppContext';
 
 /**
  * Ensures web browser refresh / reload button always starts at the Drop Logo splash screen.
+ * Guards navigation with useRootNavigationState to avoid navigating before RootLayout is mounted.
  */
 function WebReloadGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const rootNav = useRootNavigationState();
   const { signOut } = useAuth();
   const initialized = useRef(false);
 
   useEffect(() => {
+    // Wait until Expo Router's root navigator has mounted
+    if (!rootNav?.key) return;
+
     if (Platform.OS === 'web' && !initialized.current) {
       initialized.current = true;
-      // On browser reload/refresh: reset active session so demo starts cleanly at splash -> login
-      signOut().catch(() => {});
       if (pathname !== '/splash') {
+        signOut().catch(() => {});
         router.replace('/splash');
       }
     }
-  }, [pathname, router, signOut]);
+  }, [rootNav?.key, pathname, router, signOut]);
 
   return <>{children}</>;
 }

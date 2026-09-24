@@ -526,11 +526,11 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 | 11.14 | Create `app/(tabs)/patients.tsx` — Admin patient list + delete | `app/(tabs)/patients.tsx` | ✅ |
 | 11.15 | Create `.env.example` — Firebase env var template | `.env.example` | ✅ |
 
-### Pending: Firebase Project Setup (User Action Required)
-- [ ] User creates Firebase project at console.firebase.google.com
-- [ ] Enable Email/Password auth in Authentication → Sign-in method
-- [ ] Create `.env` from `.env.example` and fill in credentials
-- [ ] Add admin emails to `constants/adminEmails.ts`
+### Firebase Project Setup Progress
+- [x] User creates Firebase project at console.firebase.google.com (`healthcheckapp-30e51`)
+- [x] Create `.env` from `.env.example` and fill in credentials (Configured ✅)
+- [x] Add admin emails to `constants/adminEmails.ts` (`admin@health.com`, `admin@example.com`, `admin@hospital.com`)
+- [ ] Enable Email/Password auth in Authentication → Sign-in method (In Firebase Console)
 - [ ] Set up Firestore Security Rules (see rules template below)
 
 ### Firestore Security Rules Template

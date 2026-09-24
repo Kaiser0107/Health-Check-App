@@ -30,8 +30,8 @@ interface AuthContextValue {
   isAdmin: boolean;
   isLoading: boolean;
   authError: string | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearAuthError: () => void;
 }
@@ -70,10 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (username: string, password: string) => {
     try {
       setAuthError(null);
-      const appUser = await authSignIn(email, password);
+      const appUser = await authSignIn(username, password);
       setUser(appUser);
     } catch (err: any) {
       setAuthError(mapFirebaseError(err.code));
@@ -81,10 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const register = useCallback(async (email: string, password: string) => {
+  const register = useCallback(async (username: string, password: string) => {
     try {
       setAuthError(null);
-      const appUser = await authRegister(email, password);
+      const appUser = await authRegister(username, password);
       setUser(appUser);
     } catch (err: any) {
       setAuthError(mapFirebaseError(err.code));
@@ -122,25 +122,25 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-/** Map Firebase Auth error codes to human-readable messages. */
+/** Map Firebase Auth error codes to human-readable messages for username login. */
 function mapFirebaseError(code: string): string {
   switch (code) {
     case 'auth/user-not-found':
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
-      return 'Incorrect email or password.';
+      return 'Incorrect username or password.';
     case 'auth/email-already-in-use':
-      return 'An account with this email already exists.';
+      return 'This username is already taken. Please choose another.';
     case 'auth/weak-password':
       return 'Password must be at least 6 characters.';
     case 'auth/invalid-email':
-      return 'Please enter a valid email address.';
+      return 'Username contains invalid characters.';
     case 'auth/too-many-requests':
       return 'Too many attempts. Please try again later.';
     case 'auth/network-request-failed':
       return 'No internet connection. Please check your network.';
     default:
-      return 'Authentication failed. Please try again.';
+      return 'Authentication failed. Please check your credentials.';
   }
 }
 

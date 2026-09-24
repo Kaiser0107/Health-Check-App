@@ -1,12 +1,9 @@
 /**
- * Admin email whitelist.
- * Any user who registers or signs in with one of these emails
- * is automatically assigned the 'admin' role.
- * Update this list to add or remove admins.
+ * Backward compatibility alias for admin users.
+ * Prefer importing from constants/adminUsers.ts
  */
-export const ADMIN_EMAILS: string[] = [
-  'admin@health.com',
-  'admin@example.com',
-  'admin@hospital.com',
-];
+import { ADMIN_USERNAMES } from './adminUsers';
 
+export const ADMIN_EMAILS: string[] = ADMIN_USERNAMES.map(
+  (u) => `${u.toLowerCase()}@healthcheck.local`
+);

@@ -55,7 +55,7 @@ export default function SettingsScreen() {
     );
   };
 
-  const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : '?';
+  const userInitial = user?.username ? user.username.charAt(0).toUpperCase() : '?';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -75,7 +75,7 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.userEmail} numberOfLines={1}>
-              {user?.email || 'Unknown User'}
+              {user?.username ? `@${user.username}` : 'User'}
             </Text>
             <View style={styles.badgeRow}>
               <View style={[styles.roleBadge, isAdmin ? styles.adminBadge : styles.patientBadge]}>

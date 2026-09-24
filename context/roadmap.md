@@ -36,8 +36,8 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | 3 | Patient Information & Management | Patient profile form (`my-info.tsx`) + Admin patient roster (`patients.tsx`) | ✅ Done (Revisited) |
 | 4 | Log Health Screen | Vitals form — BMI auto-calc — scoped to current patient | ✅ Done (Revisited) |
 | **9** | **Splash Screen** | **Drop Logo bounce animation — auto-transitions based on auth** | ✅ Done |
-| **10** | **Login Screen** | **Firebase Email/Password Auth — Sign In / Create Account / Forgot Password** | ✅ Done |
-| **11** | **Role System** | **AuthContext + Admin Whitelist + Firestore Security Rules + Role Routing** | ✅ Done |
+| **10** | **Login Screen** | **Username & Password Auth — Sign In / Create Account (No email needed)** | ✅ Done |
+| **11** | **Role System** | **AuthContext + Hardcoded Admin Usernames (`constants/adminUsers.ts`) + Role Routing** | ✅ Done |
 | 5 | Dashboard Screen | Role-aware: Patient (own vitals) vs Admin (selected patient overview) | ✅ Done |
 | 7 | Settings Screen | Account profile, Role badge, Firebase Sign Out, Clear data | ✅ Done |
 | 6 | History Screen | Role-aware: List past records per patient with timestamps | ⬜ Next Up |
@@ -463,48 +463,48 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 
 ---
 
-## Milestone 10 — Login Screen (Firebase Email/Password Auth)
+## Milestone 10 — Login Screen (Username & Password Auth)
 
-> **Goal:** Secure login screen with Firebase Email/Password authentication. New users can create an account. Existing users sign in. Auth state persists so returning users skip login on restart.
-> **Status:** ✅ Done (Auth flow & UI implemented; Sign Out in Settings is in M7).
+> **Goal:** Secure login screen with Username & Password authentication without requiring real emails. Users sign in or register with a unique handle. Admin usernames are hardcoded in `constants/adminUsers.ts`.
+> **Status:** ✅ Done.
 
 ### Considerations
-- Firebase Auth SDK (`firebase/auth`) installed and configured in `lib/firebase.ts`
-- Uses `signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `sendPasswordResetEmail`
-- Listens to `onAuthStateChanged` in `AuthContext` — if user is already authenticated, skips login entirely and navigates to tabs
-- Error messages shown inline (no `Alert.alert` — cross-platform safe)
-- Form validated with email/password schema
-- Screen: full-screen, no tab bar, no header, healthcare color palette
+- Authentication uses **Username & Password** (no real email required)
+- Internally maps usernames to a virtual email for Firebase Auth compatibility (`@healthcheck.local`)
+- Admin role is determined by the hardcoded `ADMIN_USERNAMES` array in `constants/adminUsers.ts`
+- Inline error messages (no native alerts)
+- Form validated with `UsernameSchema` (min 3 chars, alphanumeric with `_.-`)
+- Quick-fill buttons for fast testing and grading demonstrations
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 10.1 | Install Firebase Auth: `npx expo install firebase` | `package.json` | ✅ |
+| 10.1 | Install Firebase SDK: `npx expo install firebase` | `package.json` | ✅ |
 | 10.2 | Update `lib/firebase.ts` to export `auth` and `db` instances | `lib/firebase.ts` | ✅ |
-| 10.3 | Add `LoginSchema` + `RegisterSchema` to `schemas/health.schema.ts` | `schemas/health.schema.ts` | ✅ |
-| 10.4 | Create `app/login.tsx` — Sign In form (email + password) | `app/login.tsx` | ✅ |
-| 10.5 | Add "Create Account" toggle to show Register form | `app/login.tsx` | ✅ |
-| 10.6 | Add "Forgot Password" button → calls `sendPasswordResetEmail` | `app/login.tsx` | ✅ |
+| 10.3 | Add `UsernameSchema`, `LoginSchema`, `RegisterSchema` | `schemas/health.schema.ts` | ✅ |
+| 10.4 | Create `app/login.tsx` — Username + Password form | `app/login.tsx` | ✅ |
+| 10.5 | Add "Create Account" toggle for new users | `app/login.tsx` | ✅ |
+| 10.6 | Add Quick-Fill demo buttons (`admin`, `supervisor`, `patient1`) | `app/login.tsx` | ✅ |
 | 10.7 | Wire `onAuthStateChanged` in `AuthContext` + `AuthGate` in `app/_layout.tsx` | `app/_layout.tsx` | ✅ |
-| 10.8 | Sign-out option in Settings screen | `app/(tabs)/settings.tsx` | 🔄 In M7 |
-| 10.9 | Style login screen (full-screen, no header, no tab bar, healthcare palette) | `app/login.tsx` | ✅ |
+| 10.8 | Sign-out option in Settings screen | `app/(tabs)/settings.tsx` | ✅ |
+| 10.9 | Style login screen with healthcare palette | `app/login.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [x] New user can create an account (email + password) — Firebase user created
+- [x] New user can register with username + password (no email needed)
 - [x] Registered user can sign in with correct credentials
-- [x] Wrong credentials shows inline error (not Alert)
-- [x] "Forgot Password" sends a reset email
+- [x] Wrong credentials shows inline error
+- [x] Signing in as `admin` automatically assigns Admin role
+- [x] Signing in as `patient1` automatically assigns Patient role
 - [x] Signed-in user who restarts the app goes directly to tabs (skips login)
-- [x] Unauthenticated user cannot access tab navigator
 - [x] `npx tsc --noEmit` — no errors
 
 ---
 
-## Milestone 11 — Role System (Admin / Patient)
+## Milestone 11 — Role System (Hardcoded Admin Usernames)
 
-> **Goal:** Firebase Auth wired end-to-end. Admin email whitelist assigns roles at registration.
-> Role stored in Firestore. Navigation, AppContext, and storage all role-aware.
+> **Goal:** Role-based routing and permissions. Admin usernames are hardcoded in `constants/adminUsers.ts`.
+> Role stored in Firestore & local session. Navigation, AppContext, and storage all role-aware.
 
 ### Work Completed
 
@@ -512,24 +512,24 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 |---|---|---|---|
 | 11.1 | Install `firebase` package | `package.json` | ✅ |
 | 11.2 | Wire real Firebase init with EXPO_PUBLIC_ env vars | `lib/firebase.ts` | ✅ |
-| 11.3 | Create `lib/auth.ts` — signIn, register, signOut, resolveAppUser | `lib/auth.ts` | ✅ |
-| 11.4 | Create `constants/adminEmails.ts` — admin whitelist | `constants/adminEmails.ts` | ✅ |
+| 11.3 | Create `lib/auth.ts` — signIn, register, signOut, resolveAppUser (Username-based) | `lib/auth.ts` | ✅ |
+| 11.4 | Create `constants/adminUsers.ts` — hardcoded admin usernames list | `constants/adminUsers.ts` | ✅ |
 | 11.5 | Create `context/AuthContext.tsx` — onAuthStateChanged + role | `context/AuthContext.tsx` | ✅ |
-| 11.6 | Update `context/AppContext.tsx` — role-aware, per-patientId ops | `context/AppContext.tsx` | ✅ |
-| 11.7 | Update `lib/storage.ts` — all keys namespaced by patientId | `lib/storage.ts` | ✅ |
+| 11.6 | Update `context/AppContext.tsx` — role-aware, per-patientId ops + `createPatient` | `context/AppContext.tsx` | ✅ |
+| 11.7 | Update `lib/storage.ts` — all keys namespaced by patientId + roster | `lib/storage.ts` | ✅ |
 | 11.8 | Update `lib/firestore.ts` — real Firestore calls + admin helpers | `lib/firestore.ts` | ✅ |
-| 11.9 | Add `UserRole`, `PatientSummary`, `LoginSchema`, `RegisterSchema` | `schemas/health.schema.ts` | ✅ |
+| 11.9 | Add `UserRole`, `PatientSummary`, `UsernameSchema`, `LoginSchema`, `RegisterSchema` | `schemas/health.schema.ts` | ✅ |
 | 11.10 | Update `app/_layout.tsx` — AuthProvider + AuthGate + AppProvider | `app/_layout.tsx` | ✅ |
-| 11.11 | Create `app/login.tsx` — Sign In / Create Account / Forgot Password | `app/login.tsx` | ✅ |
+| 11.11 | Create `app/login.tsx` — Username/Password Sign In & Register | `app/login.tsx` | ✅ |
 | 11.12 | Create `app/splash.tsx` — Drop Logo animation | `app/splash.tsx` | ✅ |
 | 11.13 | Update `app/(tabs)/_layout.tsx` — role-conditional tab visibility | `app/(tabs)/_layout.tsx` | ✅ |
-| 11.14 | Create `app/(tabs)/patients.tsx` — Admin patient list + delete | `app/(tabs)/patients.tsx` | ✅ |
-| 11.15 | Create `.env.example` — Firebase env var template | `.env.example` | ✅ |
+| 11.14 | Create `app/(tabs)/patients.tsx` — Admin patient roster + Add Patient modal | `app/(tabs)/patients.tsx` | ✅ |
+| 11.15 | Create `.env.example` & configure `.env` with Firebase credentials | `.env` | ✅ |
 
 ### Firebase Project Setup Progress
 - [x] User creates Firebase project at console.firebase.google.com (`healthcheckapp-30e51`)
 - [x] Create `.env` from `.env.example` and fill in credentials (Configured ✅)
-- [x] Add admin emails to `constants/adminEmails.ts` (`admin@health.com`, `admin@example.com`, `admin@hospital.com`)
+- [x] Add admin usernames to `constants/adminUsers.ts` (`admin`, `supervisor`, `nurse_lead`)
 - [ ] Enable Email/Password auth in Authentication → Sign-in method (In Firebase Console)
 - [ ] Set up Firestore Security Rules (see rules template below)
 

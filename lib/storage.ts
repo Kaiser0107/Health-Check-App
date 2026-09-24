@@ -113,7 +113,8 @@ const ROSTER_KEY = '@health_check:all_patients_roster';
 
 export interface RosterPatient {
   uid: string;
-  email: string;
+  username: string;
+  email?: string;
   fullName: string;
   patientId?: string;
   createdAt: string;

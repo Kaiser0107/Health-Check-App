@@ -177,7 +177,7 @@ export default function PatientsScreen() {
                 </View>
               )}
             </View>
-            <Text style={styles.patientEmail}>{item.email}</Text>
+            <Text style={styles.patientEmail}>@{item.username}</Text>
             {item.patientId ? (
               <Text style={styles.patientId}>ID: {item.patientId}</Text>
             ) : null}

@@ -155,7 +155,8 @@ export type UserRole = z.infer<typeof UserRoleSchema>;
 /** Lightweight summary of a patient for the admin patients list. */
 export const PatientSummarySchema = z.object({
   uid: z.string(),          // Firebase UID of the patient user
-  email: z.string().email(),
+  username: z.string(),
+  email: z.string().optional(),
   fullName: z.string(),
   patientId: z.string().optional(),
   createdAt: z.string(),    // ISO timestamp
@@ -165,23 +166,33 @@ export type PatientSummary = z.infer<typeof PatientSummarySchema>;
 /** Firestore user document shape (users/{uid}). */
 export const FirestoreUserSchema = z.object({
   uid: z.string(),
-  email: z.string(),
+  username: z.string(),
+  email: z.string().optional(),
   role: UserRoleSchema,
   createdAt: z.string(),
 });
 export type FirestoreUser = z.infer<typeof FirestoreUserSchema>;
 
-// ─── Login / Register Schemas ─────────────────────────────────────────────────
+// ─── Login / Register Schemas (Username & Password) ───────────────────────────
+
+export const UsernameSchema = z
+  .string()
+  .min(3, 'Username must be at least 3 characters')
+  .max(30, 'Username cannot exceed 30 characters')
+  .regex(
+    /^[a-zA-Z0-9_.-]+$/,
+    'Username can only contain letters, numbers, underscores, dots, or dashes'
+  );
 
 export const LoginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  username: UsernameSchema,
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 export type LoginInput = z.infer<typeof LoginSchema>;
 
 export const RegisterSchema = z
   .object({
-    email: z.string().email('Please enter a valid email address'),
+    username: UsernameSchema,
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(6, 'Please confirm your password'),
   })

@@ -203,9 +203,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // 2. Add to roster
         const summary: PatientSummary = {
           uid: newPatientId,
-          email: info.contactNumber
-            ? `${info.contactNumber.replace(/[^0-9]/g, '')}@patient.local`
-            : `${newPatientId}@patient.local`,
+          username:
+            info.patientId?.toLowerCase().replace(/[^a-z0-9]/g, '_') ||
+            info.fullName.toLowerCase().replace(/[^a-z0-9]/g, '_') ||
+            newPatientId,
           fullName: info.fullName,
           patientId: newPatientId,
           createdAt: new Date().toISOString(),

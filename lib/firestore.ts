@@ -69,8 +69,9 @@ export async function adminGetAllPatients(): Promise<PatientSummary[]> {
       .filter((u) => u.role === 'patient')
       .map((u) => ({
         uid: u.uid,
+        username: u.username ?? (u.email ? u.email.split('@')[0] : 'patient'),
         email: u.email,
-        fullName: u.fullName ?? u.email,
+        fullName: u.fullName ?? u.username ?? 'Patient',
         patientId: u.patientId,
         createdAt: u.createdAt,
       })) as PatientSummary[];

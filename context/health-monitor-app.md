@@ -52,20 +52,20 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Build order | Skeleton-first, design second | Correct logic before visual polish |
 | History charts | Yes — line chart per vital | Meaningful trend visibility |
 | **Splash Screen** | **Animated Drop Logo screen** (`app/splash.tsx`) | Branded entry point; appears on every app launch before auth check |
-| **Authentication** | **Firebase Email/Password** (`firebase/auth`) | Secure, persistent cloud auth; user stays signed in across app restarts |
-| **Login Screen** | **Dedicated screen** (`app/login.tsx`) — Sign In, Create Account, Forgot Password | Required gateway to the main app; sits between Splash and Tab Navigator |
-| **Auth** | `firebase/auth` (Email/Password) + Firestore role | Role resolved at registration from admin email whitelist |
-| **Admin Role** | Email whitelist in `constants/adminEmails.ts` | Simple, no backend needed; easy to update |
+| **Authentication** | **Username & Password** (Firebase Auth with internal domain) | No real email required; unique usernames with persistent cloud auth |
+| **Login Screen** | **Dedicated screen** (`app/login.tsx`) — Sign In & Create Account | Required gateway to main app; sits between Splash and Tab Navigator |
+| **Auth** | Username & Password + Firestore role | Role resolved at registration from hardcoded admin usernames list |
+| **Admin Role** | Username list in `constants/adminUsers.ts` | Hardcoded, manually managed by admin; simple and secure |
 | **Patient Data Scope** | `patientId` (Firebase UID) as storage key namespace | Prevents cross-patient data leakage on shared device |
 
 ---
 
-## Why Firebase Auth + Local-First Health Data?
+## Why Username & Password + Local-First Health Data?
 
-1. **Secure Identity** — Firebase Email/Password auth gives each user a persistent, verified identity. Sign-in state is managed by the Firebase SDK and survives app restarts.
-2. **Full Offline Reliability for Health Data** — Once signed in, all health records are stored locally in `AsyncStorage`. The app functions reliably in clinics, schools, homes, and remote areas without internet.
-3. **Simple, Robust Codebase** — Auth is handled by Firebase (no token management code needed). Health data CRUD has zero cloud dependency — no Firestore, no sync complexity.
-4. **Simulator & Snack Ready** — Health data operations run instantly in Expo Snack and local Expo Go with 100% deterministic local storage; only the login step requires internet.
+1. **Frictionless Authentication** — Users do not need a personal or corporate email address to use the health app. They simply pick a username and password.
+2. **Hardcoded Admin Management** — The app developer manually controls who holds the Admin role via `constants/adminUsers.ts`.
+3. **Full Offline Reliability for Health Data** — All health records are stored locally in `AsyncStorage`. The app functions reliably in clinics, schools, homes, and remote areas without internet.
+4. **Simulator & Snack Ready** — Deterministic local storage and offline demo fallback ensure the app runs anywhere for testing and grading.
 
 ---
 
@@ -76,20 +76,21 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 - [x] Health data entry covers all 7 vitals (Heart Rate, BP, Temp, SpO2, Weight, Height, Blood Sugar)
 - [x] BMI auto-calculates and updates reactively on weight/height change
 - [x] BMI category label (Underweight / Normal / Overweight / Obese) displays correctly
-- [ ] **Splash Screen:** Drop Logo animation plays on every app launch before auth check
-- [ ] **Login Screen:** Firebase Email/Password sign-in, create account, and forgot password work correctly
-- [ ] **Auth gate:** Unauthenticated users cannot reach the tab navigator; signed-in users skip the login screen
-- [ ] Dashboard shows Patient Summary and cards for every vital with colour-coded status
+- [x] **Splash Screen:** Drop Logo animation plays on cold app launch
+- [x] **Login Screen:** Username & Password sign-in and account registration (no email required)
+- [x] **Auth gate:** Unauthenticated users cannot reach tabs; signed-in users skip login
+- [x] **Dashboard:** Role-aware health overview (Patient metrics vs Admin patient monitoring)
+- [x] **Settings:** Role badge (`ADMINISTRATOR` vs `PATIENT`), System status, and Sign Out
+- [x] Admin username list in `constants/adminUsers.ts` correctly assigns admin role
+- [x] Admin can see all registered patients in the Patients tab and add new patients via modal
+- [x] Admin can delete a patient record
+- [x] Patient cannot see the Patients admin tab
+- [x] Data is scoped per-patientId (no cross-patient data leakage)
 - [ ] Health History shows past records with a line chart per vital
 - [x] All records persist to AsyncStorage and survive app restart (100% Local-First)
 - [x] App runs on Android and iOS via Expo Go and Expo Snack without errors
 - [ ] Styles are in separate `StyleSheet` files — no inline styles, no NativeWind
-- [ ] No purple/violet hex codes in UI
-- [ ] Admin email whitelist correctly assigns admin role on registration
-- [ ] Admin can see all patients in the Patients tab
-- [ ] Admin can delete a patient record
-- [ ] Patient cannot see the Patients admin tab
-- [ ] Data is scoped per-patientId (no cross-patient data leakage)
+- [x] No purple/violet hex codes in UI
 
 ---
 
@@ -101,7 +102,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Navigation | Expo Router + Universal `App.tsx` | Native tab routing + Snack simulator support |
 | State | React Context (`AppContext.tsx`) | Lightweight reactive state; zero boilerplate |
 | Storage | `@react-native-async-storage/async-storage` | 100% Local-First; zero account friction; offline |
-| Auth | `firebase/auth` (Email/Password) | Firebase-managed identity; persistent auth state across app restarts |
+| Auth | Username & Password (Firebase Auth + virtual domain) | No real email required; persistent auth state |
 | User ID | `AsyncStorage` UUID (`lib/uuid.ts`) | Internal stable device identifier |
 | Charts | `react-native-gifted-charts` | Expo-compatible line charts |
 | Forms | `react-hook-form` + `zod` + `lib/zodResolver.ts` | Type-safe validation without subpath export issues |
@@ -110,7 +111,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Styling | React Native `StyleSheet` API | Native, separated from logic — no NativeWind |
 | Icons | `@expo/vector-icons` | Built into Expo SDK |
 | Date | `date-fns` | Lightweight date formatting |
-| Role System | `constants/adminEmails.ts` + Firestore `users/{uid}` | Whitelist-based admin detection at registration |
+| Role System | `constants/adminUsers.ts` + Firestore `users/{uid}` | Hardcoded username list for admin role assignment |
 
 > **Removed:** `nativewind`, `tailwindcss`, `@hookform/resolvers`
 

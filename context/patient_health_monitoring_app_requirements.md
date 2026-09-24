@@ -24,8 +24,8 @@ App Launch
               │
               ▼
 ┌─────────────────────────┐
-│  LOGIN SCREEN            │  Firebase Email/Password Authentication
-│  (Authentication)        │  Email + Password inputs + Sign In button
+│  LOGIN SCREEN            │  Firebase Username/Password Authentication
+│  (Authentication)        │  Username + Password inputs + Sign In button
 │                          │  "Create Account" option for new users
 └─────────────┬───────────┘
               │  (on successful auth)
@@ -43,13 +43,14 @@ App Launch
 - No user interaction required
 - Implemented as a dedicated screen: `app/splash.tsx`
 
-### Login Screen — Firebase Authentication
-- **Authentication method:** Firebase Email/Password (`firebase/auth`)
-- Fields: Email address, Password
-- Actions: **Sign In**, **Create Account** (register new user), **Forgot Password** (reset via email)
+### Login Screen — Username & Password Authentication
+- **Authentication method:** Username & Password backed by Firebase Auth (virtual `@healthcheck.local` internal domain — no real email required)
+- Fields: Username, Password
+- Actions: **Sign In**, **Create Account** (register new user)
 - On successful sign-in → navigates to the main tab navigator with **role-based routing**: Admins are routed to the **Patients** tab; Patients are routed to the **Dashboard**
 - On failed sign-in → shows inline error message (no native Alert)
 - Auth state persisted by Firebase SDK — returning users go straight to main app (skip login re-entry)
+- Quick-demo autofill buttons provided for fast role testing (`admin`, `supervisor`, `patient1`)
 - Implemented as a dedicated screen: `app/login.tsx`
 
 ---
@@ -156,14 +157,15 @@ Component-based structure with the following screens:
   * Animated app logo drop animation on launch
   * Auto-transitions to Login (or Main App if already signed in)
 * **Login Screen** (Authentication — `app/login.tsx`)
-  * Email + Password fields
-  * Sign In, Create Account, Forgot Password
-  * Firebase Email/Password auth + role resolution
+  * Username + Password fields (no real email required)
+  * Sign In, Create Account (with quick-demo autofill buttons for admin and patient)
+  * Firebase Auth backing via internal virtual domain (`@healthcheck.local`) + hardcoded role resolution
 * **Dashboard** (`app/(tabs)/index.tsx`)
   * **Patient Role**: Displays own summary (ID, Name, Age, Sex), overall status badge, and 7 vital cards
   * **Admin Role**: Displays selected patient's summary and vitals (or interactive prompt to select a patient from the roster)
 * **Patients** (Admin Only — `app/(tabs)/patients.tsx`)
-  * Registered patient roster with avatar, name, email, and patient ID
+  * Registered patient roster with avatar, name, username, and patient ID
+  * "Add Patient" modal allowing admin to register/provision new patients
   * Select patient to view on Dashboard or log vitals
   * Delete patient with confirmation dialog
 * **Patient Info** (Patient Profile — `app/(tabs)/my-info.tsx`)
@@ -178,7 +180,7 @@ Component-based structure with the following screens:
   * Past health records with timestamps and line charts per vital
   * Scoped to the current patient
 * **Settings** (`app/(tabs)/settings.tsx`)
-  * Account email and User Role badge (Admin vs Patient)
+  * Account username (`@username`) and User Role badge (Admin vs Patient)
   * Firebase Sign Out (returns to Login)
   * Data management and clear data option
 
@@ -195,10 +197,11 @@ Component-based structure with the following screens:
 
 ## 7. DATA & STORAGE
 
-* **Authentication:** Firebase Email/Password (`firebase/auth`) — user identity managed in Firebase.
+* **Authentication:** Username & Password mapped internally to Firebase Auth without real emails (`${username}@healthcheck.local`) — user identity managed via Firebase.
 * **Health data storage** is **100% Local-First** using `@react-native-async-storage/async-storage`.
 * Fast, lightweight, and fully offline-capable after initial sign-in.
-* Health records are scoped to the signed-in Firebase UID.
+* Health records are scoped to the signed-in Firebase UID (`@health_records_${patientId}`).
+* Admin-managed patient summaries are stored locally and in Firestore `patients` collection.
 * Guaranteed 100% compatible with Expo Snack and Expo Go without cloud database setup.
 
 ---
@@ -206,9 +209,10 @@ Component-based structure with the following screens:
 ## 8. USER ROLES
 
 ### Admin Role
-- Assigned by email whitelist in `constants/adminEmails.ts`
+- Assigned by hardcoded username whitelist in `constants/adminUsers.ts` (`ADMIN_USERNAMES`)
 - Admin accounts are **management-only** — no personal health records
 - Can: Create, Read, Update, Delete any patient profile
+- Can: Provision new patients directly via "Add Patient" modal
 - Can: View any patient's health dashboard and history
 - Can: Log health for any selected patient
 - Cannot: Have their own health record
@@ -224,6 +228,6 @@ Component-based structure with the following screens:
 - Sees: Dashboard (own), My Info, Log Health, History, Settings
 
 ### Role Assignment
-- At registration: email is checked against `constants/adminEmails.ts`
-- Role is stored in Firestore `users/{uid}/role`
+- At registration & sign-in: username is checked against hardcoded list `constants/adminUsers.ts`
+- Role is stored in Firestore `users/{uid}/role` and local auth session
 - Role persists across app restarts via Firebase Auth + Firestore

@@ -527,6 +527,7 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 | 11.15 | Create `.env.example` & configure `.env` with Firebase credentials | `.env` | ✅ |
 | 11.16 | Create `app/index.tsx` — Root redirect to `/splash` | `app/index.tsx` | ✅ |
 | 11.17 | Web reload gate & Sign Out redirect to Drop Logo (`/splash`) before login | `app/_layout.tsx`, `app/(tabs)/settings.tsx`, `app/splash.tsx` | ✅ |
+| 11.18 | Define User & Admin role limitations and permission boundaries matrix | `context/patient_health_monitoring_app_requirements.md` | ✅ |
 
 ### Firebase Project Setup Progress
 - [x] User creates Firebase project at console.firebase.google.com (`healthcheckapp-30e51`)

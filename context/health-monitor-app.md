@@ -70,6 +70,22 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 
 ---
 
+## Role Limitations & Security Boundaries
+
+### Regular User (Patient) Limitations:
+- **No Access to Patients Roster**: The `Patients` tab is hidden from navigation (`href: null`).
+- **No Cross-Patient Access**: The user cannot view, select, edit, or delete any other patient's data.
+- **Context-Locked**: `currentPatientId` is permanently locked to `user.uid`. All vitals logged and health history charts displayed are strictly the user's own.
+- **No Account Provisioning**: Cannot create or delete other patient accounts.
+- **No Self-Elevation**: Admin usernames are hardcoded in `constants/adminUsers.ts`.
+
+### Administrator Limitations:
+- **Management-Only**: Admins have no personal health profile; the `My Info` tab is hidden (`href: null`).
+- **Cannot View Dashboard Unselected**: The admin dashboard requires selecting a patient from the roster first.
+- **Code-Level Role Management**: Admins cannot grant admin status from the app UI.
+
+---
+
 ## Success Criteria
 
 - [x] Patient profile (Patient Information) fully editable with all fields (Patient ID, Full Name, Age, Sex, Date of Birth, Contact, Address)

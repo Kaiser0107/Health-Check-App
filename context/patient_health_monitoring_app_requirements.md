@@ -206,28 +206,39 @@ Component-based structure with the following screens:
 
 ---
 
-## 8. USER ROLES
+## 8. USER ROLES & PERMISSION BOUNDARIES
 
-### Admin Role
-- Assigned by hardcoded username whitelist in `constants/adminUsers.ts` (`ADMIN_USERNAMES`)
-- Admin accounts are **management-only** — no personal health records
-- Can: Create, Read, Update, Delete any patient profile
-- Can: Provision new patients directly via "Add Patient" modal
-- Can: View any patient's health dashboard and history
-- Can: Log health for any selected patient
-- Cannot: Have their own health record
-- Sees: Dashboard (selected patient), Patients (CRUD list), Log Health, History, Settings
+### Role Comparison Matrix
 
-### Patient Role
-- All non-admin accounts are Patients
-- Can: View and edit their own profile info
-- Can: Log their own health vitals
-- Can: View their own dashboard and history
-- Cannot: View other patients' data
-- Cannot: Access the Patients admin tab
-- Sees: Dashboard (own), My Info, Log Health, History, Settings
+| Feature / Capability | Admin (`ADMIN_USERNAMES`) | Regular User (`patient`) | Rationale / Limitation |
+|---|---|---|---|
+| **Patients Management Tab** | ✅ Full Access | ❌ **Hidden & Blocked** | Patients cannot view hospital/clinic patient lists |
+| **Add New Patient Profile** | ✅ Yes (Modal in Patients tab) | ❌ **Blocked** | Only admins can provision other patient records |
+| **Delete Patient Profile** | ✅ Yes (with confirmation) | ❌ **Blocked** | Patients cannot delete their own or other records |
+| **Patient Profile Info (Demographics)** | ❌ Read-only via Patient card | ✅ **Self-managed (My Info)** | Patients maintain their own personal details |
+| **Personal Health Dashboard** | ❌ None (Management only) | ✅ **Self-only** | Admin has no personal vitals; Patient sees only own vitals |
+| **Select Active Patient** | ✅ From roster list | ❌ **Locked to `user.uid`** | Patient cannot switch contexts or view others |
+| **Log Health Vitals** | ✅ For any selected patient | ✅ **For self only** | Patient logs directly to their own medical timeline |
+| **View Health History & Charts** | ✅ For any selected patient | ✅ **For self only** | Patient history is strictly scoped to `user.uid` |
+| **Role Elevation / Assignment** | ❌ Read-only code whitelist | ❌ Read-only code whitelist | Admin accounts can only be added via `adminUsers.ts` |
+| **Local Storage Scope** | Access to roster & selected keys | Strict `@health_records_${uid}` | Namespaced keys prevent local data overlap |
 
-### Role Assignment
-- At registration & sign-in: username is checked against hardcoded list `constants/adminUsers.ts`
-- Role is stored in Firestore `users/{uid}/role` and local auth session
-- Role persists across app restarts via Firebase Auth + Firestore
+### Regular User (Patient) Limitations
+1. **Zero Access to Other Patients**:
+   - The `Patients` tab is hidden from bottom navigation (`href: null`).
+   - Deep linking to the patients roster is guarded by role inspection in `(tabs)/_layout.tsx`.
+2. **Context-Locked Operations**:
+   - In `AppContext`, `currentPatientId` is permanently locked to `user.uid` upon sign-in.
+   - The user cannot call `selectPatient()`, `createPatient()`, or `deletePatient()`.
+3. **Storage Boundary Enforcement**:
+   - All local storage operations use keys namespaced by the patient's own UID (`@health_records_${uid}`, `@patient_info_${uid}`).
+   - Cloud Firestore security rules reject queries where `request.auth.uid != patientId`.
+4. **No Role Elevation**:
+   - Role assignment is hardcoded in `constants/adminUsers.ts`. A user cannot change their role in Firestore or through the UI.
+
+### Admin Limitations
+1. **Management-Only Persona**:
+   - Admins do not have personal health records. The `My Info` tab is hidden from their navigation (`href: null`).
+   - Admins cannot view a dashboard without selecting a patient first.
+2. **Deterministic Whitelist**:
+   - Admins cannot promote other users to admin from the UI. Admin privileges must be hardcoded in `constants/adminUsers.ts`.

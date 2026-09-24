@@ -39,6 +39,8 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | 6 | History Screen | List past records — timestamps — no charts yet | ⬜ Not Started |
 | 7 | Settings Screen | Clear all data — about info | ⬜ Not Started |
 | 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ⬜ Not Started |
+| **9** | **Splash Screen** | **Drop Logo animation — auto-transition to Login** | ⬜ Not Started |
+| **10** | **Login Screen** | **Firebase Email/Password Auth — Sign In / Create Account** | ⬜ Not Started |
 
 **Status key:** ⬜ Not Started · 🔄 In Progress · ✅ Done · 🚫 Blocked
 
@@ -388,9 +390,9 @@ npm install react-native-gifted-charts
 
 ### Data
 - [ ] UUID persists in `AsyncStorage` across restarts
-- [ ] Firestore data scoped to `users/{uuid}` only
-- [ ] No Firebase Auth SDK in codebase
+- [ ] Health data scoped to the signed-in Firebase UID
 - [ ] `google-services.json` in `.gitignore`
+- [ ] Firebase Auth sign-in state persists across app restarts
 
 ### Code Quality
 - [ ] `npx tsc --noEmit` passes
@@ -406,4 +408,75 @@ npm install react-native-gifted-charts
 ### Build
 - [ ] `npx expo start` — no crash on load
 - [ ] Tested on Android via Expo Go
+
+---
+
+## Milestone 9 — Splash Screen (Drop Logo)
+
+> **Goal:** Animated branded splash screen that plays on every app launch, then transitions to the Login screen (or directly to tabs if the user is already signed in).
+> **No user interaction — purely visual and transitional.**
+
+### Considerations
+- Use `react-native` `Animated` API (no third-party animation library) for the drop animation
+- Logo drops into center of screen over ~0.8s with an ease-in curve
+- After animation completes (~1.5–2s total), check Firebase Auth state:
+  - If signed in → navigate to `/(tabs)`
+  - If not signed in → navigate to `/login`
+- Screen must have no tab bar, no header — full-screen branded view
+- Background color from `theme.colors.primary` or white; app name text below logo
+
+### Tasks
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 9.1 | Create `app/splash.tsx` with logo + drop animation | `app/splash.tsx` | ⬜ |
+| 9.2 | Implement `Animated.spring` or `Animated.timing` drop sequence | `app/splash.tsx` | ⬜ |
+| 9.3 | Wire auth check: navigate to login or tabs after animation | `app/splash.tsx` | ⬜ |
+| 9.4 | Set splash as the initial route in `app/_layout.tsx` | `app/_layout.tsx` | ⬜ |
+| 9.5 | Style splash screen (full-screen, no header, no tab bar) | `app/splash.tsx` | ⬜ |
+
+### Verify Before Moving On
+- [ ] Splash screen appears on cold app launch before any other screen
+- [ ] Drop animation plays smoothly (no jank)
+- [ ] After animation, navigates to login (unauthenticated) or tabs (authenticated)
+- [ ] No tab bar or navigation header visible on splash screen
+- [ ] `npx tsc --noEmit` — no errors
+
+---
+
+## Milestone 10 — Login Screen (Firebase Email/Password Auth)
+
+> **Goal:** Secure login screen with Firebase Email/Password authentication. New users can create an account. Existing users sign in. Auth state persists so returning users skip login on restart.
+
+### Considerations
+- Firebase Auth SDK (`firebase/auth`) must be installed and configured in `lib/firebase.ts`
+- Use `signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `sendPasswordResetEmail`
+- Listen to `onAuthStateChanged` in `AppContext` or `app/_layout.tsx` — if user is already authenticated on app start, skip login entirely and show tabs
+- Error messages shown inline (NOT via `Alert.alert` — not cross-platform safe)
+- Form validated with `react-hook-form` + `zod` (`LoginSchema`, `RegisterSchema`)
+- Screen: full-screen, no tab bar, no header, healthcare color palette
+
+### Tasks
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 10.1 | Install Firebase Auth: `npx expo install firebase` (already installed, just add `firebase/auth` usage) | `package.json` | ⬜ |
+| 10.2 | Update `lib/firebase.ts` to export `auth` instance (`getAuth`) | `lib/firebase.ts` | ⬜ |
+| 10.3 | Add `LoginSchema` + `RegisterSchema` to `schemas/health.schema.ts` | `schemas/health.schema.ts` | ⬜ |
+| 10.4 | Create `app/login.tsx` — Sign In form (email + password) | `app/login.tsx` | ⬜ |
+| 10.5 | Add "Create Account" toggle to show Register form (email + password + confirm password) | `app/login.tsx` | ⬜ |
+| 10.6 | Add "Forgot Password" button → calls `sendPasswordResetEmail` | `app/login.tsx` | ⬜ |
+| 10.7 | Wire `onAuthStateChanged` in `app/_layout.tsx` — redirect authenticated user directly to tabs | `app/_layout.tsx` | ⬜ |
+| 10.8 | Sign-out option in Settings screen | `app/(tabs)/settings.tsx` | ⬜ |
+| 10.9 | Style login screen (full-screen, no header, no tab bar, healthcare palette) | `app/login.tsx` | ⬜ |
+
+### Verify Before Moving On
+- [ ] New user can create an account (email + password) — Firebase user created
+- [ ] Registered user can sign in with correct credentials
+- [ ] Wrong credentials shows inline error (not Alert)
+- [ ] "Forgot Password" sends a reset email
+- [ ] Signed-in user who restarts the app goes directly to tabs (skips login)
+- [ ] Unauthenticated user cannot access tab navigator
+- [ ] Sign-out from Settings clears auth state and returns to login screen
+- [ ] `npx tsc --noEmit` — no errors
 

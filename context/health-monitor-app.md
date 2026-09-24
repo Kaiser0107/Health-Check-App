@@ -1,7 +1,7 @@
 # Patient Health Monitoring App — Project Plan
 
 > **File:** `context/health-monitor-app.md`
-> **Created:** 2026-09-18 | **Updated:** 2026-09-21
+> **Created:** 2026-09-18 | **Updated:** 2026-09-24
 > **Status:** APPROVED — Build in progress (see roadmap)
 >
 > 📌 Related files:
@@ -51,15 +51,18 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Styling | React Native `StyleSheet` API | Separated from logic; no utility-class library |
 | Build order | Skeleton-first, design second | Correct logic before visual polish |
 | History charts | Yes — line chart per vital | Meaningful trend visibility |
+| **Splash Screen** | **Animated Drop Logo screen** (`app/splash.tsx`) | Branded entry point; appears on every app launch before auth check |
+| **Authentication** | **Firebase Email/Password** (`firebase/auth`) | Secure, persistent cloud auth; user stays signed in across app restarts |
+| **Login Screen** | **Dedicated screen** (`app/login.tsx`) — Sign In, Create Account, Forgot Password | Required gateway to the main app; sits between Splash and Tab Navigator |
 
 ---
 
-## Why Local-First Without Auth?
+## Why Firebase Auth + Local-First Health Data?
 
-1. **Healthcare Personnel & Caregiver Utility** — nurses, teachers, caregivers, or patients can immediately log vitals without sign-in friction or internet connectivity hurdles.
-2. **Full Offline Reliability** — functions reliably in clinics, schools, homes, and remote areas.
-3. **Simpler & Robust Codebase** — zero Auth SDK overhead, zero token refresh bugs, zero external cloud dependencies.
-4. **Simulator & Snack Ready** — runs instantly in Expo Snack and local Expo Go with 100% deterministic local storage.
+1. **Secure Identity** — Firebase Email/Password auth gives each user a persistent, verified identity. Sign-in state is managed by the Firebase SDK and survives app restarts.
+2. **Full Offline Reliability for Health Data** — Once signed in, all health records are stored locally in `AsyncStorage`. The app functions reliably in clinics, schools, homes, and remote areas without internet.
+3. **Simple, Robust Codebase** — Auth is handled by Firebase (no token management code needed). Health data CRUD has zero cloud dependency — no Firestore, no sync complexity.
+4. **Simulator & Snack Ready** — Health data operations run instantly in Expo Snack and local Expo Go with 100% deterministic local storage; only the login step requires internet.
 
 ---
 
@@ -70,6 +73,9 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 - [x] Health data entry covers all 7 vitals (Heart Rate, BP, Temp, SpO2, Weight, Height, Blood Sugar)
 - [x] BMI auto-calculates and updates reactively on weight/height change
 - [x] BMI category label (Underweight / Normal / Overweight / Obese) displays correctly
+- [ ] **Splash Screen:** Drop Logo animation plays on every app launch before auth check
+- [ ] **Login Screen:** Firebase Email/Password sign-in, create account, and forgot password work correctly
+- [ ] **Auth gate:** Unauthenticated users cannot reach the tab navigator; signed-in users skip the login screen
 - [ ] Dashboard shows Patient Summary and cards for every vital with colour-coded status
 - [ ] Health History shows past records with a line chart per vital
 - [x] All records persist to AsyncStorage and survive app restart (100% Local-First)
@@ -87,7 +93,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Navigation | Expo Router + Universal `App.tsx` | Native tab routing + Snack simulator support |
 | State | React Context (`AppContext.tsx`) | Lightweight reactive state; zero boilerplate |
 | Storage | `@react-native-async-storage/async-storage` | 100% Local-First; zero account friction; offline |
-| Auth | ❌ None | Patient tool — immediate offline access |
+| Auth | `firebase/auth` (Email/Password) | Firebase-managed identity; persistent auth state across app restarts |
 | User ID | `AsyncStorage` UUID (`lib/uuid.ts`) | Internal stable device identifier |
 | Charts | `react-native-gifted-charts` | Expo-compatible line charts |
 | Forms | `react-hook-form` + `zod` + `lib/zodResolver.ts` | Type-safe validation without subpath export issues |
@@ -106,13 +112,15 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 ```
 Health Check App/
 ├── app/
+│   ├── splash.tsx                # Splash Screen (Drop Logo animation)
+│   ├── login.tsx                 # Login Screen (Firebase Email/Password Auth)
 │   ├── (tabs)/
 │   │   ├── index.tsx             # Dashboard (Health Overview)
 │   │   ├── my-info.tsx           # My Information (personal profile)
 │   │   ├── log-health.tsx        # Log Health Data
 │   │   ├── history.tsx           # Health History + Charts
 │   │   └── settings.tsx          # Settings
-│   ├── _layout.tsx               # Root layout (Firebase init, UUID setup)
+│   ├── _layout.tsx               # Root layout (auth state gate → Splash → Login → Tabs)
 │   └── +not-found.tsx
 │
 ├── components/

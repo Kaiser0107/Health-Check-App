@@ -57,6 +57,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | **Auth** | Username & Password + Firestore role | Role resolved at registration from hardcoded admin usernames list |
 | **Admin Role** | Username list in `constants/adminUsers.ts` | Hardcoded, manually managed by admin; simple and secure |
 | **Patient Data Scope** | `patientId` (Firebase UID) as storage key namespace | Prevents cross-patient data leakage on shared device |
+| **Web Reload & Sign Out** | Route to Drop Logo (`/splash`) before Login | Ensures reload and sign-out always replay drop logo animation before showing login |
 
 ---
 

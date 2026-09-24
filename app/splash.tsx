@@ -1,35 +1,40 @@
 /**
  * Splash Screen — Drop Logo animation.
- * The logo drops into the center of the screen, then the app
- * checks auth state and navigates to the appropriate route.
+ * The logo drops into the center of the screen, then transitions
+ * automatically to the Login screen.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
+import { View, Text, Animated, Easing, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
 
 export default function SplashScreen() {
   const router = useRouter();
-  const { user, isAdmin, isLoading } = useAuth();
   const [animationDone, setAnimationDone] = useState(false);
 
   const dropAnim = useRef(new Animated.Value(-160)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Drop animation: logo falls from above into center
+    // Reset initial animation values so it always replays on re-entry
+    dropAnim.setValue(-160);
+    fadeAnim.setValue(0);
+    setAnimationDone(false);
+
+    const useNative = Platform.OS !== 'web';
+
+    // Drop animation: logo falls from above into center with a bounce
     Animated.sequence([
       Animated.parallel([
         Animated.timing(dropAnim, {
           toValue: 0,
           duration: 700,
           easing: Easing.out(Easing.bounce),
-          useNativeDriver: true,
+          useNativeDriver: useNative,
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 400,
-          useNativeDriver: true,
+          useNativeDriver: useNative,
         }),
       ]),
       // Hold for a moment after landing
@@ -40,18 +45,10 @@ export default function SplashScreen() {
   }, []);
 
   useEffect(() => {
-    if (animationDone && !isLoading) {
-      if (user) {
-        if (isAdmin) {
-          router.replace('/(tabs)/patients' as any);
-        } else {
-          router.replace('/(tabs)' as any);
-        }
-      } else {
-        router.replace('/login' as any);
-      }
+    if (animationDone) {
+      router.replace('/login' as any);
     }
-  }, [animationDone, isLoading, user, isAdmin]);
+  }, [animationDone]);
 
   return (
     <View style={styles.container}>
@@ -102,7 +99,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0f172a',
     letterSpacing: -0.5,
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  tagline: { fontSize: 15, color: '#64748b' },
+  tagline: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '400',
+  },
 });

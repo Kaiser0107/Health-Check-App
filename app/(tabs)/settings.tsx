@@ -22,7 +22,7 @@ export default function SettingsScreen() {
   const performSignOut = async () => {
     try {
       await signOut();
-      router.replace('/login');
+      router.replace('/splash');
     } catch (err: any) {
       if (Platform.OS === 'web') {
         window.alert(err?.message || 'Failed to sign out');

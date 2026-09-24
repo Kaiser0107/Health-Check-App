@@ -526,7 +526,7 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 | 11.14 | Create `app/(tabs)/patients.tsx` — Admin patient roster + Add Patient modal | `app/(tabs)/patients.tsx` | ✅ |
 | 11.15 | Create `.env.example` & configure `.env` with Firebase credentials | `.env` | ✅ |
 | 11.16 | Create `app/index.tsx` — Root redirect to `/splash` | `app/index.tsx` | ✅ |
-| 11.17 | Cross-platform Sign Out & Clear Cache handlers with `/login` redirect | `app/(tabs)/settings.tsx` | ✅ |
+| 11.17 | Web reload gate & Sign Out redirect to Drop Logo (`/splash`) before login | `app/_layout.tsx`, `app/(tabs)/settings.tsx`, `app/splash.tsx` | ✅ |
 
 ### Firebase Project Setup Progress
 - [x] User creates Firebase project at console.firebase.google.com (`healthcheckapp-30e51`)

@@ -134,3 +134,4 @@ function mapFirebaseError(code: string): string {
       return 'Authentication failed. Please try again.';
   }
 }
+

@@ -280,3 +280,4 @@ const styles = StyleSheet.create({
   toggleLabel: { fontSize: 14, color: '#64748b' },
   toggleLink: { fontSize: 14, color: '#2563eb', fontWeight: '600' },
 });
+

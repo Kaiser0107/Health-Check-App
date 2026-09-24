@@ -90,3 +90,4 @@ export async function resolveAppUser(uid: string, email: string): Promise<AppUse
   const role = userDoc?.role ?? resolveRole(email);
   return { uid, email, role };
 }
+

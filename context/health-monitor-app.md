@@ -112,7 +112,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Date | `date-fns` | Lightweight date formatting |
 | Role System | `constants/adminEmails.ts` + Firestore `users/{uid}` | Whitelist-based admin detection at registration |
 
-> **Removed:** `nativewind`, `tailwindcss`, `firebase`, `firebase/auth`, `@hookform/resolvers`
+> **Removed:** `nativewind`, `tailwindcss`, `@hookform/resolvers`
 
 ---
 
@@ -162,10 +162,11 @@ Health Check App/
 │   └── global.styles.ts          # Shared layout styles (screen wrappers, spacing)
 │
 ├── lib/
-│   ├── firebase.ts               # Firebase Firestore init
-│   ├── firestore.ts              # CRUD helpers
+│   ├── firebase.ts               # Firebase Firestore & Auth init
+│   ├── firestore.ts              # CRUD & Admin helpers
 │   ├── auth.ts                   # signIn, register, signOut, resolveAppUser
 │   ├── bmi.ts                    # BMI calculation + category logic
+│   ├── storage.ts                # Per-patient AsyncStorage helpers
 │   └── uuid.ts                   # UUID generation + AsyncStorage persistence
 │
 ├── hooks/
@@ -178,7 +179,7 @@ Health Check App/
 │   └── AuthContext.tsx            # Firebase auth state + role
 │
 ├── schemas/
-│   └── health.schema.ts          # Zod schemas for all inputs
+│   └── health.schema.ts          # Zod schemas for all inputs & roles
 │
 ├── constants/
 │   ├── thresholds.ts             # Normal ranges per vital
@@ -187,8 +188,11 @@ Health Check App/
 │
 ├── context/ (project docs)
 │   ├── patient_health_monitoring_app_requirements.md
+│   ├── roadmap.md
 │   └── health-monitor-app.md     ← this file
 │
+├── .env.example                  # Environment variables template
+├── firestore.rules               # Firestore security rules
 ├── app.json
 ├── babel.config.js
 ├── package.json
@@ -223,26 +227,36 @@ export const styles = StyleSheet.create({
 ## Firebase Data Model
 
 ```
-users/{uuid}/                     ← top-level document (no Auth)
+users/{uid}/                      ← user metadata & role (created on registration)
+  ├── uid: string                 ← Firebase Auth UID
+  ├── email: string
+  ├── role: "admin" | "patient"   ← resolved from ADMIN_EMAILS whitelist
+  └── createdAt: string (ISO)
+
+patients/{patientId}/             ← patient demographic profile
+  ├── patientId?: string          ← optional hospital/school ID
   ├── fullName: string
   ├── age: number
-  ├── sex: string
+  ├── sex: "Male" | "Female"
   ├── dateOfBirth: string (ISO)
   ├── contactNumber: string
-  └── address: string
+  ├── address: string
+  └── profilePicture?: string     ← base64 data URI
 
-users/{uuid}/records/{autoId}     ← health log entries (sub-collection)
-  ├── timestamp: Timestamp
-  ├── heartRate: number            (BPM)
-  ├── systolic: number             (mmHg)
-  ├── diastolic: number            (mmHg)
-  ├── temperature: number          (°C)
-  ├── oxygenLevel: number          (%)
-  ├── weight: number               (kg)
-  ├── height: number               (cm)
-  ├── bmi: number                  (auto-computed)
-  ├── bloodSugar: number           (mg/dL)
-  └── bloodSugarType: "Fasting" | "Random" | "Other"
+patients/{patientId}/records/{recordId}  ← vital health log entries (sub-collection)
+  ├── timestamp: string (ISO)
+  ├── heartRate: number           (BPM)
+  ├── systolic: number            (mmHg)
+  ├── diastolic: number           (mmHg)
+  ├── temperature: number         (°C)
+  ├── oxygenLevel: number         (%)
+  ├── weight: number              (kg)
+  ├── height: number              (cm)
+  ├── bmi: number                 (auto-computed)
+  ├── bmiCategory: "Underweight" | "Normal" | "Overweight" | "Obese"
+  ├── bloodSugar: number          (mg/dL)
+  ├── bloodSugarType: "Fasting" | "Random" | "Other"
+  └── syncedAt?: Timestamp
 ```
 
 ---
@@ -361,10 +375,11 @@ users/{uuid}/records/{autoId}     ← health log entries (sub-collection)
 - [ ] Line charts render with ≥ 2 data points
 
 ### Data / Security
-- [ ] UUID persists in `AsyncStorage` across app restarts
-- [ ] Firestore reads/writes scoped to `users/{uuid}`
-- [ ] No Firebase Auth SDK present in codebase
-- [ ] `google-services.json` listed in `.gitignore`
+- [ ] Firebase Auth sign-in state persists across app restarts
+- [ ] Firestore security rules enforce patient data scoping (`patients/{patientId}`)
+- [ ] Admin role stored in `users/{uid}/role` and verified against `constants/adminEmails.ts`
+- [ ] `.env` and `google-services.json` listed in `.gitignore`
+- [ ] Local storage scoped by `patientId` (no data leakage on shared device)
 
 ### Accessibility
 - [ ] All inputs have `accessibilityLabel`

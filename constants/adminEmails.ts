@@ -9,3 +9,4 @@ export const ADMIN_EMAILS: string[] = [
   // 'admin@hospital.com',
   // 'nurse.supervisor@clinic.org',
 ];
+

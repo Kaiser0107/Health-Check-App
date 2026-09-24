@@ -32,16 +32,16 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | # | Milestone | Focus | Status |
 |---|---|---|---|
 | 1 | Project Bootstrap | Expo + folders + UUID + tabs | ✅ Done |
-| 2 | Data & Logic Layer | Schemas, BMI, thresholds, Storage helpers, Context | 🔄 Revisited (storage keys now per-patientId) |
-| 3 | Patient Information Screen | Patient profile form — save & load from storage | 🔄 Revisited (role-split: patient edits own, admin manages) |
-| 4 | Log Health Screen | Vitals form — BMI auto-calc — save record | 🔄 Revisited (records keyed to patientId) |
-| 5 | Dashboard Screen | Read latest record — patient summary, vitals + status | ⬜ Not Started |
-| 6 | History Screen | List past records — timestamps — no charts yet | ⬜ Not Started |
-| 7 | Settings Screen | Clear all data — about info | ⬜ Not Started |
+| 2 | Data & Logic Layer | Schemas, BMI, thresholds, Storage helpers, Context (patientId-scoped) | ✅ Done (Revisited) |
+| 3 | Patient Information & Management | Patient profile form (`my-info.tsx`) + Admin patient roster (`patients.tsx`) | ✅ Done (Revisited) |
+| 4 | Log Health Screen | Vitals form — BMI auto-calc — scoped to current patient | ✅ Done (Revisited) |
+| **9** | **Splash Screen** | **Drop Logo bounce animation — auto-transitions based on auth** | ✅ Done |
+| **10** | **Login Screen** | **Firebase Email/Password Auth — Sign In / Create Account / Forgot Password** | ✅ Done |
+| **11** | **Role System** | **AuthContext + Admin Whitelist + Firestore Security Rules + Role Routing** | ✅ Done |
+| 5 | Dashboard Screen | Role-aware: Patient (own vitals) vs Admin (selected patient overview) | ⬜ Next Up |
+| 6 | History Screen | Role-aware: List past records per patient with timestamps | ⬜ Not Started |
+| 7 | Settings Screen | Account profile, Role badge, Firebase Sign Out, Clear data | ⬜ Not Started |
 | 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ⬜ Not Started |
-| **9** | **Splash Screen** | **Drop Logo animation — auto-transition to Login** | ⬜ Not Started |
-| **10** | **Login Screen** | **Firebase Email/Password Auth — Sign In / Create Account** | ⬜ Not Started |
-| **11** | **Role System** | **AuthContext + Firebase Auth + Admin/Patient role routing** | ✅ Done |
 
 **Status key:** ⬜ Not Started · 🔄 In Progress · ✅ Done · 🚫 Blocked
 
@@ -106,38 +106,49 @@ npm install react-native-gifted-charts
 ## Milestone 2 — Data & Logic Layer
 
 > **Goal:** All core logic written, typed, and manually verified — before any screen renders real data.
-> **No UI changes in this milestone — logic files only.**
+> **Status:** ✅ Done (Revisited in Milestone 11 for per-patient storage & role system).
 
 ### Considerations
 - Zod schemas are the single source of truth for all types — derive TypeScript types from them (`z.infer<typeof Schema>`)
 - BMI formula: `weight / (height / 100) ** 2` — round to 2 decimal places
-- Vital status logic must cover all 7 vitals with 3 levels each (`normal` / `warning` / `critical`)
-- Firestore structure: `users/{uuid}` (doc) + `users/{uuid}/records/{autoId}` (sub-collection)
-- AppContext wraps the entire app — all screens read data through context hooks, not direct Firestore calls
+- Vital status logic covers all 7 vitals with 3 levels each (`normal` / `warning` / `critical`)
+- **Firestore & Storage Structure:**
+  - `users/{uid}`: account metadata and role (`role: 'admin' | 'patient'`)
+  - `patients/{patientId}`: patient demographic profile
+  - `patients/{patientId}/records/{recordId}`: vital health log entries
+  - AsyncStorage keys: `@health_check:${patientId}:my_info` and `@health_check:${patientId}:records`
+- `AppContext` is role-aware via `useAuth()`:
+  - For **Patients**: automatically scopes data operations to `user.uid`
+  - For **Admins**: provides access to all patients roster, `selectPatient()`, and `deletePatient()`
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 2.1 | Write Zod schemas | `schemas/health.schema.ts` | ✅ |
+| 2.1 | Write Zod schemas (MyInfo, HealthRecord, BMI, BloodSugar) | `schemas/health.schema.ts` | ✅ |
 | 2.2 | Write BMI utility functions | `lib/bmi.ts` | ✅ |
 | 2.3 | Write vital status thresholds + helper | `constants/thresholds.ts` | ✅ |
-| 2.4 | Write local storage + Firestore sync helpers | `lib/storage.ts`, `lib/firestore.ts` | ✅ |
-| 2.5 | Build AppContext with local-first persistence | `context/AppContext.tsx` | ✅ |
-| 2.6 | Build `useMyInfo` hook | `hooks/useMyInfo.ts` | ✅ |
-| 2.7 | Build `useHealthData` hook | `hooks/useHealthData.ts` | ✅ |
-| 2.8 | Build `useBMI` hook | `hooks/useBMI.ts` | ✅ |
-| 2.9 | Wrap app root in `AppContext.Provider` | `app/_layout.tsx` | ✅ |
+| 2.4 | Write local storage helpers (scoped to `patientId`) | `lib/storage.ts` | ✅ |
+| 2.5 | Write Firestore sync helpers + admin query helpers | `lib/firestore.ts` | ✅ |
+| 2.6 | Build role-aware `AppContext` with local-first persistence | `context/AppContext.tsx` | ✅ |
+| 2.7 | Build `useMyInfo` hook | `hooks/useMyInfo.ts` | ✅ |
+| 2.8 | Build `useHealthData` hook | `hooks/useHealthData.ts` | ✅ |
+| 2.9 | Build `useBMI` hook | `hooks/useBMI.ts` | ✅ |
+| 2.10 | Add role, auth, and patient summary schemas | `schemas/health.schema.ts` | ✅ |
 
 ### Key Interfaces (from schemas)
 
 ```ts
 // MyInfo
-{ fullName, age, sex: 'Male' | 'Female', dateOfBirth, contactNumber, address }
+{ patientId?, profilePicture?, fullName, age, sex: 'Male' | 'Female', dateOfBirth, contactNumber, address }
 
 // HealthRecord
-{ heartRate, systolic, diastolic, temperature, oxygenLevel,
-  weight, height, bmi, bloodSugar, bloodSugarType, timestamp }
+{ id?, timestamp, heartRate, systolic, diastolic, temperature, oxygenLevel,
+  weight, height, bmi, bmiCategory, bloodSugar, bloodSugarType }
+
+// UserRole & AppUser
+type UserRole = 'admin' | 'patient';
+interface AppUser { uid: string; email: string; role: UserRole; }
 ```
 
 ### Verify Before Moving On
@@ -145,9 +156,10 @@ npm install react-native-gifted-charts
 - [x] `getBMICategory(22.49)` returns `"Normal"`
 - [x] `getVitalStatus('heartRate', 72)` returns `"normal"`
 - [x] `getVitalStatus('heartRate', 130)` returns `"critical"`
-- [x] Local storage `saveLocalMyInfo` writes and `getLocalMyInfo` reads data
-- [x] Local storage `addLocalRecord` appends and `getLocalRecords` returns array with record
+- [x] Local storage `saveLocalMyInfo(patientId, info)` writes and `getLocalMyInfo(patientId)` reads data
+- [x] Local storage `addLocalRecord(patientId, data)` appends and `getLocalRecords(patientId)` returns records
 - [x] AppContext updates correctly when a new record is added
+- [x] AppContext correctly differentiates between Patient (own UID) and Admin (patient selector)
 - [x] `useBMI` returns updated BMI when weight or height changes
 - [x] No TypeScript errors (`npx tsc --noEmit` passed cleanly)
 
@@ -155,42 +167,42 @@ npm install react-native-gifted-charts
 
 ---
 
-## Milestone 3 — Patient Information Screen
+## Milestone 3 — Patient Information & Management
 
-> **Goal:** A working patient information profile form. Data loads from local storage on mount, edits save back to local storage.
-> **Clean, accessible functional layout using React Native `StyleSheet`.**
+> **Goal:** A working patient information profile form for Patients (`my-info.tsx`) and a dedicated patient management screen for Admins (`patients.tsx`).
+> **Status:** ✅ Done (Revisited in Milestone 11 for role split).
 
 ### Considerations
-- Form uses `react-hook-form` + self-contained `lib/zodResolver.ts` — no external resolver package or subpath resolution issues
-- Captures core patient demographics: Patient ID, Full Name, Age, Sex, Date of Birth, Contact Number, Address
-- **Profile picture**: `expo-image-picker` (bundled in SDK 54, no extra install) — camera or photo library, stored as base64 URI in `MyInfoSchema.profilePicture`
-- On mount: read from `AsyncStorage` via `useMyInfo` → populate form defaults (including profile picture URI)
-- On submit: validate → save to `AsyncStorage` via `updateMyInfo` → show success `Alert`
-- The `InputField` shared component is created here — it will be reused everywhere
-- Sex field uses interactive Male/Female chips
-- Date of Birth uses native modal calendar selector (`@react-native-community/datetimepicker`) with auto-age computation
+- **Patient Role**:
+  - Uses `my-info.tsx` to view and edit their own demographic information
+  - Form uses `react-hook-form` + self-contained `lib/zodResolver.ts`
+  - Captures core patient demographics: Patient ID, Full Name, Age, Sex, Date of Birth, Contact Number, Address
+  - **Profile picture**: `expo-image-picker` — camera or photo library, stored as base64 URI in `profilePicture`
+  - Saves locally to `@health_check:${user.uid}:my_info` and syncs to Firestore `patients/{uid}`
+- **Admin Role**:
+  - Manages patients via the dedicated **Patients tab** (`app/(tabs)/patients.tsx`)
+  - Fetches and displays registered patients from Firestore `users/` collection
+  - Can select a patient to view their health dashboard or log vitals on their behalf
+  - Can delete a patient profile and associated local data with confirmation Alert
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
 | 3.1 | Build `InputField` component (unstyled) | `components/ui/InputField.tsx` | ✅ |
-| 3.2 | Build `MyInfoForm` / `PatientInfoForm` component | `components/forms/MyInfoForm.tsx` | ✅ |
-| 3.3 | Wire `my-info.tsx` screen — load + save | `app/(tabs)/my-info.tsx` | ✅ |
+| 3.2 | Build `MyInfoForm` component | `components/forms/MyInfoForm.tsx` | ✅ |
+| 3.3 | Wire `my-info.tsx` screen — load + save personal profile | `app/(tabs)/my-info.tsx` | ✅ |
 | 3.4 | Add `profilePicture` field to `MyInfoSchema` | `schemas/health.schema.ts` | ✅ |
-| 3.5 | Add circular avatar with camera/library picker to `MyInfoForm` | `components/forms/MyInfoForm.tsx` | ✅ |
+| 3.5 | Add circular avatar with camera/library picker & modal | `components/forms/MyInfoForm.tsx` | ✅ |
+| 3.6 | Build `patients.tsx` screen for Admins (patient list, select, delete) | `app/(tabs)/patients.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [x] All fields render correctly (Patient ID, Full Name, Age, Sex, Date of Birth, Contact Number, Address)
-- [x] Profile picture avatar shows at top of form with camera badge overlay
-- [x] Tapping avatar opens action sheet (Camera / Photo Library / Cancel)
-- [x] Selected photo appears as circular avatar immediately
-- [x] Profile picture is saved alongside other patient data in AsyncStorage
-- [x] Reopening the screen restores the profile picture from storage
-- [x] Submitting with empty required fields shows inline validation errors
-- [x] Valid data saves to local storage (`AsyncStorage`)
-- [x] Reopening the screen loads previously saved data into form fields
-- [x] Verified working in Expo Snack and local environment
+- [x] All demographic fields render and validate correctly
+- [x] Profile picture avatar works (camera/library) with circular preview
+- [x] Patient profile saves to per-patient local storage and Firestore
+- [x] Admin can view registered patients in `patients.tsx`
+- [x] Admin can select a patient to set `currentPatientId` in AppContext
+- [x] Admin can delete a patient with confirmation dialog
 - [x] No TypeScript errors (`npx tsc --noEmit` passed cleanly)
 
 ---
@@ -199,16 +211,16 @@ npm install react-native-gifted-charts
 
 ## Milestone 4 — Log Health Screen
 
-> **Goal:** A working health data entry form. All 7 vitals log to `AsyncStorage`. BMI auto-calculates as weight and height change.
-> **Clean functional layout using React Native `StyleSheet`.**
+> **Goal:** A working health data entry form. All 7 vitals log to local storage and Firestore, scoped to the current patient. BMI auto-calculates as weight and height change.
+> **Status:** ✅ Done (Revisited in Milestone 11 for patient scoping).
 
 ### Considerations
+- Health data is logged to the `currentPatientId` from `AppContext` (the patient's own UID for Patient role, or the selected patient's UID for Admin role)
 - BMI is **not a manual user input** — it is calculated automatically from weight (kg) + height (cm) using `lib/bmi.ts` and stored alongside the record
 - Blood pressure is two separate numeric inputs (Systolic / Diastolic)
 - Blood sugar type is an interactive selector (`Fasting` / `Random` / `Other`)
-- Form validation uses `HealthRecordSchema` and `lib/zodResolver.ts`
-- On submit: validate → compute BMI & status → add record to `AsyncStorage` via `useHealthData` → reset form → show success `Alert`
-- Verified compatible with Expo Snack and Expo Go
+- Form validation uses `LogHealthInputSchema` and `lib/zodResolver.ts`
+- On submit: validate → compute BMI & status → add record via `useHealthData` → reset form → show success `Alert`
 
 ### Tasks
 
@@ -217,16 +229,16 @@ npm install react-native-gifted-charts
 | 4.1 | Build `LogHealthForm` component with all 7 vitals | `components/forms/LogHealthForm.tsx` | ✅ |
 | 4.2 | Integrate `useBMI` — show live interactive BMI preview & category | `components/forms/LogHealthForm.tsx` | ✅ |
 | 4.3 | Wire `log-health.tsx` screen with `useHealthData` | `app/(tabs)/log-health.tsx` | ✅ |
+| 4.4 | Scope health records to `currentPatientId` in `AppContext` | `context/AppContext.tsx` | ✅ |
 
 ### Verify Before Moving On
 - [x] All 7 vitals accept valid input and reject invalid input (e.g. negative heart rate)
 - [x] Blood pressure dual inputs feed both values into the same form record
 - [x] BMI display updates as weight or height changes (live preview)
 - [x] Blood sugar type selector works (Fasting / Random / Other)
-- [x] Submitting saves a complete record to `AsyncStorage`
-- [x] Record includes auto-computed `bmi` field
+- [x] Submitting saves record scoped to `currentPatientId` in `AsyncStorage`
+- [x] Record includes auto-computed `bmi` and `bmiCategory`
 - [x] Form resets after successful submit
-- [x] Verified running cleanly in Expo Snack and local Expo Go
 - [x] No TypeScript errors (`npx tsc --noEmit` passed cleanly)
 
 ---
@@ -235,31 +247,36 @@ npm install react-native-gifted-charts
 
 ## Milestone 5 — Dashboard Screen
 
-> **Goal:** Read the latest health record from Firestore and display all vitals with plain-text status labels. Shows personal profile summary at the top.
-> **No design — plain `<View>` and `<Text>` only.**
+> **Goal:** Role-aware health overview. For Patients, displays personal summary and latest vitals with status badges. For Admins, displays the selected patient's summary and vitals (or prompts patient selection).
+> **Status:** ⬜ Next Up.
 
 ### Considerations
-- Dashboard reads from AppContext (which already holds latest record via real-time listener)
-- "Latest record" = the most recent entry by timestamp
-- Each vital shows: value + unit + status string (`"normal"` / `"warning"` / `"critical"`)
-- If no records logged yet, show a helpful empty state message: "No health data logged yet. Tap Log Health to get started."
-- Personal summary at top: Full Name + Age (from My Info)
+- **Patient Role**:
+  - Personal summary at top: Full Name + Age (from `myInfo`)
+  - Overall health status badge: Normal / Warning / Critical (computed by `constants/thresholds.ts`)
+  - 7 Vital Cards displaying latest recorded measurements + status
+  - Helpful empty state if no records logged yet: "No health data logged yet. Tap Log Health to get started."
+- **Admin Role**:
+  - If a patient is selected (`currentPatientId` is set): shows that patient's name, age, overall status, and 7 vital cards
+  - If NO patient is selected: displays a banner/prompt: "No patient selected. Tap here to select a patient from the Patients roster." with direct navigation to the Patients tab
+- Data reads reactively from `useHealthData` and `useApp`
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 5.1 | Build `MySummary` component (unstyled) | `components/dashboard/MySummary.tsx` | ⬜ |
-| 5.2 | Build `VitalCard` component (unstyled) | `components/dashboard/VitalCard.tsx` | ⬜ |
-| 5.3 | Build `OverallStatus` component (unstyled) | `components/dashboard/OverallStatus.tsx` | ⬜ |
-| 5.4 | Wire `index.tsx` dashboard screen | `app/(tabs)/index.tsx` | ⬜ |
+| 5.1 | Build `MySummary` component (Patient info banner) | `components/dashboard/MySummary.tsx` | ⬜ |
+| 5.2 | Build `VitalCard` component with status badge | `components/dashboard/VitalCard.tsx` | ⬜ |
+| 5.3 | Build `OverallStatus` component (Normal / Warning / Critical) | `components/dashboard/OverallStatus.tsx` | ⬜ |
+| 5.4 | Build Admin patient selection banner / empty state | `components/dashboard/AdminPatientPrompt.tsx` | ⬜ |
+| 5.5 | Wire role-conditional `index.tsx` dashboard screen | `app/(tabs)/index.tsx` | ⬜ |
 
 ### Verify Before Moving On
-- [ ] Dashboard shows the personal name and age from My Info
-- [ ] All 7 vital cards render with values from the latest record
-- [ ] Status string (`normal` / `warning` / `critical`) is correct for each vital
-- [ ] Empty state message shows when no records exist
-- [ ] After logging a new record on the Log Health screen, switching to Dashboard shows updated values
+- [ ] Patient sees their own summary and latest vital cards
+- [ ] Admin sees selected patient's vitals or the "Select a Patient" prompt
+- [ ] All 7 vital cards render with correct values and status indicators
+- [ ] Overall health status badge correctly matches worst vital status
+- [ ] After logging a new record, switching to Dashboard shows updated values
 - [ ] No TypeScript errors
 
 ---
@@ -268,30 +285,31 @@ npm install react-native-gifted-charts
 
 ## Milestone 6 — History Screen
 
-> **Goal:** List all past health records in reverse chronological order. Each record shows timestamp + all vital values. No charts yet.
-> **No design — plain `<View>` and `<Text>` only.**
+> **Goal:** List all past health records in reverse chronological order. Scoped to the current patient (own history for Patients; selected patient's history for Admins).
+> **No charts yet — plain records list.**
 
 ### Considerations
-- Records come from AppContext (real-time Firestore listener — already set up in Milestone 2)
-- Display in reverse order (newest first)
-- Each item shows: date/time + all 7 vitals + BMI
-- Empty state when no records exist
+- Reads from `useHealthData` (`records` array)
+- Display in reverse chronological order (newest first)
+- Each item shows: date/time + all 7 vitals + BMI & category
+- Empty state when no records exist for the patient
 - Use `date-fns` to format timestamps into readable strings (e.g. `"19 Sep 2026, 10:30 AM"`)
-- Charts are **not added here** — that is Phase 8 (design milestone)
+- Admin sees history for the currently selected patient
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 6.1 | Build record list item component (unstyled) | `components/history/RecordItem.tsx` | ⬜ |
-| 6.2 | Wire `history.tsx` screen | `app/(tabs)/history.tsx` | ⬜ |
+| 6.1 | Build record list item component | `components/history/RecordItem.tsx` | ⬜ |
+| 6.2 | Wire `history.tsx` screen with empty state & patient banner | `app/(tabs)/history.tsx` | ⬜ |
 
 ### Verify Before Moving On
 - [ ] All logged records appear, newest first
-- [ ] Timestamps are human-readable (not raw Firestore Timestamps)
+- [ ] Timestamps are human-readable
 - [ ] All vital values display correctly per record
 - [ ] Empty state shows when no records exist
-- [ ] Adding a new record on Log Health appears in History without needing to restart
+- [ ] Adding a new record on Log Health appears in History immediately
+- [ ] Admin switching patients updates History to the selected patient
 - [ ] No TypeScript errors
 
 ---
@@ -300,30 +318,32 @@ npm install react-native-gifted-charts
 
 ## Milestone 7 — Settings Screen
 
-> **Goal:** Basic settings — clear all data and view app info. Fully functional, unstyled.
+> **Goal:** Account management, role display, Firebase Sign Out, and data reset options.
+> **Fully functional, unstyled.**
 
 ### Considerations
-- "Clear all data" must delete:
-  1. The `users/{uuid}` Firestore document
-  2. All documents in `users/{uuid}/records/` sub-collection
-  3. Reset AppContext state to empty
-- After clearing, Dashboard shows empty state, History shows empty state
-- **Do not** delete the UUID from AsyncStorage — the same identifier is reused if the user wants to start fresh
-- Show a confirmation `Alert` before deleting (destructive action)
+- Account card: displays current user email and role badge (`Admin` or `Patient`)
+- **Sign Out**: calls `signOut()` from `useAuth()` → redirects immediately to `/login`
+- **Clear Data**:
+  - For Patient: clears own local storage and local records via `clearAllData()`
+  - For Admin: provides option to refresh cache or clear local cache
+- Show a confirmation `Alert` before clearing data (destructive action)
+- Display app version and platform info
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 7.1 | Add `deleteAllData` Firestore helper | `lib/firestore.ts` | ⬜ |
-| 7.2 | Wire `settings.tsx` screen | `app/(tabs)/settings.tsx` | ⬜ |
+| 7.1 | Build User Account Card (email + role badge) | `components/settings/AccountCard.tsx` | ⬜ |
+| 7.2 | Wire Sign Out button to `useAuth().signOut()` | `app/(tabs)/settings.tsx` | ⬜ |
+| 7.3 | Wire Clear Data button with confirmation Alert | `app/(tabs)/settings.tsx` | ⬜ |
+| 7.4 | Display App Info & Version details | `app/(tabs)/settings.tsx` | ⬜ |
 
 ### Verify Before Moving On
-- [ ] Confirmation Alert appears before deletion
-- [ ] After confirming, all Firestore data is deleted (verify in Firebase Console)
-- [ ] Dashboard and History show empty states immediately after clear
-- [ ] My Info fields are blank on next visit to that screen
-- [ ] UUID in AsyncStorage is unchanged (not deleted)
+- [ ] Displays logged-in user email and role badge correctly
+- [ ] Tapping Sign Out signs user out of Firebase and redirects to Login screen
+- [ ] Confirmation Alert appears before data deletion
+- [ ] Clearing data resets local state correctly
 - [ ] No TypeScript errors
 
 ---
@@ -430,56 +450,56 @@ npm install react-native-gifted-charts
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 9.1 | Create `app/splash.tsx` with logo + drop animation | `app/splash.tsx` | ⬜ |
-| 9.2 | Implement `Animated.spring` or `Animated.timing` drop sequence | `app/splash.tsx` | ⬜ |
-| 9.3 | Wire auth check: navigate to login or tabs after animation | `app/splash.tsx` | ⬜ |
-| 9.4 | Set splash as the initial route in `app/_layout.tsx` | `app/_layout.tsx` | ⬜ |
-| 9.5 | Style splash screen (full-screen, no header, no tab bar) | `app/splash.tsx` | ⬜ |
+| 9.1 | Create `app/splash.tsx` with logo + drop animation | `app/splash.tsx` | ✅ |
+| 9.2 | Implement `Animated.spring` or `Animated.timing` drop sequence | `app/splash.tsx` | ✅ |
+| 9.3 | Wire auth check: navigate to login or tabs after animation | `app/splash.tsx` | ✅ |
+| 9.4 | Set splash as the initial route in `app/_layout.tsx` | `app/_layout.tsx` | ✅ |
+| 9.5 | Style splash screen (full-screen, no header, no tab bar) | `app/splash.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [ ] Splash screen appears on cold app launch before any other screen
-- [ ] Drop animation plays smoothly (no jank)
-- [ ] After animation, navigates to login (unauthenticated) or tabs (authenticated)
-- [ ] No tab bar or navigation header visible on splash screen
-- [ ] `npx tsc --noEmit` — no errors
+- [x] Splash screen appears on cold app launch before any other screen
+- [x] Drop animation plays smoothly (no jank)
+- [x] After animation, navigates to login (unauthenticated) or tabs (authenticated)
+- [x] No tab bar or navigation header visible on splash screen
+- [x] `npx tsc --noEmit` — no errors
 
 ---
 
 ## Milestone 10 — Login Screen (Firebase Email/Password Auth)
 
 > **Goal:** Secure login screen with Firebase Email/Password authentication. New users can create an account. Existing users sign in. Auth state persists so returning users skip login on restart.
+> **Status:** ✅ Done (Auth flow & UI implemented; Sign Out in Settings is in M7).
 
 ### Considerations
-- Firebase Auth SDK (`firebase/auth`) must be installed and configured in `lib/firebase.ts`
-- Use `signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `sendPasswordResetEmail`
-- Listen to `onAuthStateChanged` in `AppContext` or `app/_layout.tsx` — if user is already authenticated on app start, skip login entirely and show tabs
-- Error messages shown inline (NOT via `Alert.alert` — not cross-platform safe)
-- Form validated with `react-hook-form` + `zod` (`LoginSchema`, `RegisterSchema`)
+- Firebase Auth SDK (`firebase/auth`) installed and configured in `lib/firebase.ts`
+- Uses `signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `sendPasswordResetEmail`
+- Listens to `onAuthStateChanged` in `AuthContext` — if user is already authenticated, skips login entirely and navigates to tabs
+- Error messages shown inline (no `Alert.alert` — cross-platform safe)
+- Form validated with email/password schema
 - Screen: full-screen, no tab bar, no header, healthcare color palette
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 10.1 | Install Firebase Auth: `npx expo install firebase` (already installed, just add `firebase/auth` usage) | `package.json` | ⬜ |
-| 10.2 | Update `lib/firebase.ts` to export `auth` instance (`getAuth`) | `lib/firebase.ts` | ⬜ |
-| 10.3 | Add `LoginSchema` + `RegisterSchema` to `schemas/health.schema.ts` | `schemas/health.schema.ts` | ⬜ |
-| 10.4 | Create `app/login.tsx` — Sign In form (email + password) | `app/login.tsx` | ⬜ |
-| 10.5 | Add "Create Account" toggle to show Register form (email + password + confirm password) | `app/login.tsx` | ⬜ |
-| 10.6 | Add "Forgot Password" button → calls `sendPasswordResetEmail` | `app/login.tsx` | ⬜ |
-| 10.7 | Wire `onAuthStateChanged` in `app/_layout.tsx` — redirect authenticated user directly to tabs | `app/_layout.tsx` | ⬜ |
-| 10.8 | Sign-out option in Settings screen | `app/(tabs)/settings.tsx` | ⬜ |
-| 10.9 | Style login screen (full-screen, no header, no tab bar, healthcare palette) | `app/login.tsx` | ⬜ |
+| 10.1 | Install Firebase Auth: `npx expo install firebase` | `package.json` | ✅ |
+| 10.2 | Update `lib/firebase.ts` to export `auth` and `db` instances | `lib/firebase.ts` | ✅ |
+| 10.3 | Add `LoginSchema` + `RegisterSchema` to `schemas/health.schema.ts` | `schemas/health.schema.ts` | ✅ |
+| 10.4 | Create `app/login.tsx` — Sign In form (email + password) | `app/login.tsx` | ✅ |
+| 10.5 | Add "Create Account" toggle to show Register form | `app/login.tsx` | ✅ |
+| 10.6 | Add "Forgot Password" button → calls `sendPasswordResetEmail` | `app/login.tsx` | ✅ |
+| 10.7 | Wire `onAuthStateChanged` in `AuthContext` + `AuthGate` in `app/_layout.tsx` | `app/_layout.tsx` | ✅ |
+| 10.8 | Sign-out option in Settings screen | `app/(tabs)/settings.tsx` | 🔄 In M7 |
+| 10.9 | Style login screen (full-screen, no header, no tab bar, healthcare palette) | `app/login.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [ ] New user can create an account (email + password) — Firebase user created
-- [ ] Registered user can sign in with correct credentials
-- [ ] Wrong credentials shows inline error (not Alert)
-- [ ] "Forgot Password" sends a reset email
-- [ ] Signed-in user who restarts the app goes directly to tabs (skips login)
-- [ ] Unauthenticated user cannot access tab navigator
-- [ ] Sign-out from Settings clears auth state and returns to login screen
-- [ ] `npx tsc --noEmit` — no errors
+- [x] New user can create an account (email + password) — Firebase user created
+- [x] Registered user can sign in with correct credentials
+- [x] Wrong credentials shows inline error (not Alert)
+- [x] "Forgot Password" sends a reset email
+- [x] Signed-in user who restarts the app goes directly to tabs (skips login)
+- [x] Unauthenticated user cannot access tab navigator
+- [x] `npx tsc --noEmit` — no errors
 
 ---
 

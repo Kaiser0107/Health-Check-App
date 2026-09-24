@@ -152,27 +152,35 @@ The BMI automatically updates whenever weight or height changes in the health en
 
 Component-based structure with the following screens:
 
-* **Splash Screen** (Drop Logo)
+* **Splash Screen** (Drop Logo — `app/splash.tsx`)
   * Animated app logo drop animation on launch
   * Auto-transitions to Login (or Main App if already signed in)
-* **Login Screen** (Authentication)
+* **Login Screen** (Authentication — `app/login.tsx`)
   * Email + Password fields
   * Sign In, Create Account, Forgot Password
-  * Firebase Email/Password auth
-* **Dashboard**
-  * Patient Summary (Patient ID, Name, Age, Sex)
-  * Overall Health Status (Normal / Warning / Critical)
-  * Vital Cards: Heart Rate, Blood Pressure, Temperature, Oxygen Level, Weight, BMI, Blood Sugar
-* **Patient Info** (Patient Profile)
+  * Firebase Email/Password auth + role resolution
+* **Dashboard** (`app/(tabs)/index.tsx`)
+  * **Patient Role**: Displays own summary (ID, Name, Age, Sex), overall status badge, and 7 vital cards
+  * **Admin Role**: Displays selected patient's summary and vitals (or interactive prompt to select a patient from the roster)
+* **Patients** (Admin Only — `app/(tabs)/patients.tsx`)
+  * Registered patient roster with avatar, name, email, and patient ID
+  * Select patient to view on Dashboard or log vitals
+  * Delete patient with confirmation dialog
+* **Patient Info** (Patient Profile — `app/(tabs)/my-info.tsx`)
+  * Patient only (hidden from Admin navigation)
   * Circular profile picture avatar (camera / photo library picker)
   * Patient ID, Name, Age, Sex, Date of Birth, Contact Number, Address
-* **Log Health** (Health Data Form)
+* **Log Health** (Health Data Form — `app/(tabs)/log-health.tsx`)
   * Inputs for all 7 vitals + Blood Sugar Type selector
   * Live interactive BMI calculation & category badge preview
-* **Health History**
+  * Logs to the current active patient (`currentPatientId`)
+* **Health History** (`app/(tabs)/history.tsx`)
   * Past health records with timestamps and line charts per vital
-* **Settings**
-  * App preferences, data management, clear data option
+  * Scoped to the current patient
+* **Settings** (`app/(tabs)/settings.tsx`)
+  * Account email and User Role badge (Admin vs Patient)
+  * Firebase Sign Out (returns to Login)
+  * Data management and clear data option
 
 ---
 

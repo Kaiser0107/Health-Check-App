@@ -38,9 +38,9 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | **9** | **Splash Screen** | **Drop Logo bounce animation — auto-transitions based on auth** | ✅ Done |
 | **10** | **Login Screen** | **Firebase Email/Password Auth — Sign In / Create Account / Forgot Password** | ✅ Done |
 | **11** | **Role System** | **AuthContext + Admin Whitelist + Firestore Security Rules + Role Routing** | ✅ Done |
-| 5 | Dashboard Screen | Role-aware: Patient (own vitals) vs Admin (selected patient overview) | ⬜ Next Up |
-| 6 | History Screen | Role-aware: List past records per patient with timestamps | ⬜ Not Started |
-| 7 | Settings Screen | Account profile, Role badge, Firebase Sign Out, Clear data | ⬜ Not Started |
+| 5 | Dashboard Screen | Role-aware: Patient (own vitals) vs Admin (selected patient overview) | ✅ Done |
+| 7 | Settings Screen | Account profile, Role badge, Firebase Sign Out, Clear data | ✅ Done |
+| 6 | History Screen | Role-aware: List past records per patient with timestamps | ⬜ Next Up |
 | 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ⬜ Not Started |
 
 **Status key:** ⬜ Not Started · 🔄 In Progress · ✅ Done · 🚫 Blocked
@@ -248,7 +248,7 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 ## Milestone 5 — Dashboard Screen
 
 > **Goal:** Role-aware health overview. For Patients, displays personal summary and latest vitals with status badges. For Admins, displays the selected patient's summary and vitals (or prompts patient selection).
-> **Status:** ⬜ Next Up.
+> **Status:** ✅ Done.
 
 ### Considerations
 - **Patient Role**:
@@ -265,19 +265,19 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 5.1 | Build `MySummary` component (Patient info banner) | `components/dashboard/MySummary.tsx` | ⬜ |
-| 5.2 | Build `VitalCard` component with status badge | `components/dashboard/VitalCard.tsx` | ⬜ |
-| 5.3 | Build `OverallStatus` component (Normal / Warning / Critical) | `components/dashboard/OverallStatus.tsx` | ⬜ |
-| 5.4 | Build Admin patient selection banner / empty state | `components/dashboard/AdminPatientPrompt.tsx` | ⬜ |
-| 5.5 | Wire role-conditional `index.tsx` dashboard screen | `app/(tabs)/index.tsx` | ⬜ |
+| 5.1 | Build Patient summary card (name, age, sex, ID) | `app/(tabs)/index.tsx` | ✅ |
+| 5.2 | Build `VitalCard` component with status badge | `app/(tabs)/index.tsx` | ✅ |
+| 5.3 | Build overall health status banner (Normal / Warning / Critical) | `app/(tabs)/index.tsx` | ✅ |
+| 5.4 | Build Admin empty state with quick stats and roster button | `app/(tabs)/index.tsx` | ✅ |
+| 5.5 | Wire role-conditional `index.tsx` dashboard screen | `app/(tabs)/index.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [ ] Patient sees their own summary and latest vital cards
-- [ ] Admin sees selected patient's vitals or the "Select a Patient" prompt
-- [ ] All 7 vital cards render with correct values and status indicators
-- [ ] Overall health status badge correctly matches worst vital status
-- [ ] After logging a new record, switching to Dashboard shows updated values
-- [ ] No TypeScript errors
+- [x] Patient sees their own summary and latest vital cards
+- [x] Admin sees selected patient's vitals or the "Select a Patient" prompt
+- [x] All 7 vital cards render with correct values and status indicators
+- [x] Overall health status badge correctly matches worst vital status
+- [x] After logging a new record, switching to Dashboard shows updated values
+- [x] No TypeScript errors
 
 ---
 
@@ -319,32 +319,30 @@ interface AppUser { uid: string; email: string; role: UserRole; }
 ## Milestone 7 — Settings Screen
 
 > **Goal:** Account management, role display, Firebase Sign Out, and data reset options.
-> **Fully functional, unstyled.**
+> **Status:** ✅ Done.
 
 ### Considerations
-- Account card: displays current user email and role badge (`Admin` or `Patient`)
+- Account card: displays current user email and role badge (`ADMINISTRATOR` or `PATIENT`)
 - **Sign Out**: calls `signOut()` from `useAuth()` → redirects immediately to `/login`
 - **Clear Data**:
-  - For Patient: clears own local storage and local records via `clearAllData()`
-  - For Admin: provides option to refresh cache or clear local cache
-- Show a confirmation `Alert` before clearing data (destructive action)
-- Display app version and platform info
+  - Resets local AsyncStorage cache with confirmation Alert
+- System status and App version (v1.0.0, SDK 54)
 
 ### Tasks
 
 | # | Task | File(s) | Done? |
 |---|---|---|---|
-| 7.1 | Build User Account Card (email + role badge) | `components/settings/AccountCard.tsx` | ⬜ |
-| 7.2 | Wire Sign Out button to `useAuth().signOut()` | `app/(tabs)/settings.tsx` | ⬜ |
-| 7.3 | Wire Clear Data button with confirmation Alert | `app/(tabs)/settings.tsx` | ⬜ |
-| 7.4 | Display App Info & Version details | `app/(tabs)/settings.tsx` | ⬜ |
+| 7.1 | Build User Account Card (email + role badge) | `app/(tabs)/settings.tsx` | ✅ |
+| 7.2 | Wire Sign Out button to `useAuth().signOut()` | `app/(tabs)/settings.tsx` | ✅ |
+| 7.3 | Wire Clear Data button with confirmation Alert | `app/(tabs)/settings.tsx` | ✅ |
+| 7.4 | Display System Status (Firebase / Local) & Version | `app/(tabs)/settings.tsx` | ✅ |
 
 ### Verify Before Moving On
-- [ ] Displays logged-in user email and role badge correctly
-- [ ] Tapping Sign Out signs user out of Firebase and redirects to Login screen
-- [ ] Confirmation Alert appears before data deletion
-- [ ] Clearing data resets local state correctly
-- [ ] No TypeScript errors
+- [x] Displays logged-in user email and role badge correctly
+- [x] Tapping Sign Out signs user out of Firebase and redirects to Login screen
+- [x] Confirmation Alert appears before data deletion
+- [x] Clearing data resets local state correctly
+- [x] No TypeScript errors
 
 ---
 

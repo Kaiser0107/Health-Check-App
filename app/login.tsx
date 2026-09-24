@@ -204,6 +204,35 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Quick Demo Autofill Chips (for fast presentation) */}
+        <View style={styles.demoSection}>
+          <Text style={styles.demoLabel}>Demo Quick-Fill:</Text>
+          <View style={styles.demoButtonsRow}>
+            <TouchableOpacity
+              style={[styles.demoChip, styles.adminDemoChip]}
+              onPress={() => {
+                setEmail('admin@health.com');
+                setPassword('admin123');
+                if (mode === 'register') setConfirmPassword('admin123');
+              }}
+              accessibilityLabel="Autofill Admin credentials"
+            >
+              <Text style={styles.adminDemoChipText}>🛡️ Admin (admin@health.com)</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.demoChip, styles.patientDemoChip]}
+              onPress={() => {
+                setEmail('patient@health.com');
+                setPassword('patient123');
+                if (mode === 'register') setConfirmPassword('patient123');
+              }}
+              accessibilityLabel="Autofill Patient credentials"
+            >
+              <Text style={styles.patientDemoChipText}>👤 Patient (patient@health.com)</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -279,5 +308,25 @@ const styles = StyleSheet.create({
   },
   toggleLabel: { fontSize: 14, color: '#64748b' },
   toggleLink: { fontSize: 14, color: '#2563eb', fontWeight: '600' },
+  demoSection: {
+    marginTop: 28,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  demoLabel: { fontSize: 12, fontWeight: '700', color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  demoButtonsRow: { width: '100%', gap: 8 },
+  demoChip: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  adminDemoChip: { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' },
+  patientDemoChip: { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
+  adminDemoChipText: { fontSize: 13, fontWeight: '600', color: '#1d4ed8' },
+  patientDemoChipText: { fontSize: 13, fontWeight: '600', color: '#15803d' },
 });
 

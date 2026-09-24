@@ -5,8 +5,8 @@
  * Update this list to add or remove admins.
  */
 export const ADMIN_EMAILS: string[] = [
-  // Add admin email addresses here, e.g.:
-  // 'admin@hospital.com',
-  // 'nurse.supervisor@clinic.org',
+  'admin@health.com',
+  'admin@example.com',
+  'admin@hospital.com',
 ];
 

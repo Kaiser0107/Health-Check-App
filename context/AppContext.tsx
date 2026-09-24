@@ -23,6 +23,7 @@ import {
   addLocalRecord,
   deleteLocalRecord,
   clearPatientData,
+  saveLocalPatientToRoster,
 } from '../lib/storage';
 import {
   syncSaveMyInfo,
@@ -55,6 +56,8 @@ interface AppContextValue {
   patients: PatientSummary[];
   /** Select a patient to view/edit (admin only). */
   selectPatient: (uid: string) => Promise<void>;
+  /** Create a new patient profile (admin only). */
+  createPatient: (info: MyInfo) => Promise<string>;
   /** Delete a patient and their data (admin only). */
   deletePatient: (uid: string) => Promise<void>;
   /** Refresh the admin patients list. */
@@ -182,6 +185,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [isAdmin, currentPatientId]
   );
 
+  // ─── Admin: create a new patient profile ──────────────────────────────────
+  const createPatient = useCallback(
+    async (info: MyInfo): Promise<string> => {
+      try {
+        setIsSaving(true);
+        setError(null);
+        const newPatientId =
+          info.patientId?.trim() ||
+          'pat_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+        const patientRecord: MyInfo = { ...info, patientId: newPatientId };
+
+        // 1. Save profile to storage & Firestore
+        await saveLocalMyInfo(newPatientId, patientRecord);
+        await syncSaveMyInfo(newPatientId, patientRecord);
+
+        // 2. Add to roster
+        const summary: PatientSummary = {
+          uid: newPatientId,
+          email: info.contactNumber
+            ? `${info.contactNumber.replace(/[^0-9]/g, '')}@patient.local`
+            : `${newPatientId}@patient.local`,
+          fullName: info.fullName,
+          patientId: newPatientId,
+          createdAt: new Date().toISOString(),
+        };
+        await saveLocalPatientToRoster(summary);
+
+        // 3. Update local state
+        setPatients((prev) => [summary, ...prev.filter((p) => p.uid !== newPatientId)]);
+        return newPatientId;
+      } catch (err: any) {
+        console.error('[AppContext] Error creating patient:', err);
+        setError(err?.message || 'Failed to create patient');
+        throw err;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    []
+  );
+
   // ─── Update patient profile ────────────────────────────────────────────────
   const updateMyInfo = useCallback(
     async (info: MyInfo) => {
@@ -282,13 +326,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       refreshData: () => (currentPatientId ? loadPatientData(currentPatientId) : Promise.resolve()),
       patients,
       selectPatient,
+      createPatient,
       deletePatient,
       refreshPatients,
     }),
     [
       currentPatientId, myInfo, records, latestRecord, isLoading, isSaving, error,
       updateMyInfo, addNewRecord, removeRecord, clearAllData, loadPatientData,
-      patients, selectPatient, deletePatient, refreshPatients,
+      patients, selectPatient, createPatient, deletePatient, refreshPatients,
     ]
   );
 

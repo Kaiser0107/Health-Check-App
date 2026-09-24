@@ -50,37 +50,59 @@ export async function syncGetRecords(patientId: string): Promise<HealthRecord[]>
 
 // ─── Admin: Patient List ──────────────────────────────────────────────────────
 
+import { getLocalRoster, removeLocalPatientFromRoster } from './storage';
+
 /**
  * Fetch a lightweight summary list of all registered patients.
- * Only callable by admin (enforced by Firestore Security Rules).
+ * If Firebase is configured, fetches from Firestore; otherwise reads from local roster.
  */
 export async function adminGetAllPatients(): Promise<PatientSummary[]> {
-  if (!isFirebaseConfigured) return [];
-  const snap = await getDocs(
-    query(collection(db, 'users'), orderBy('createdAt', 'asc'))
-  );
-  return snap.docs
-    .map((d) => d.data())
-    .filter((u) => u.role === 'patient')
-    .map((u) => ({
-      uid: u.uid,
-      email: u.email,
-      fullName: u.fullName ?? u.email,
-      patientId: u.patientId,
-      createdAt: u.createdAt,
-    })) as PatientSummary[];
+  if (!isFirebaseConfigured) {
+    return getLocalRoster();
+  }
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'users'), orderBy('createdAt', 'asc'))
+    );
+    const remoteList = snap.docs
+      .map((d) => d.data())
+      .filter((u) => u.role === 'patient')
+      .map((u) => ({
+        uid: u.uid,
+        email: u.email,
+        fullName: u.fullName ?? u.email,
+        patientId: u.patientId,
+        createdAt: u.createdAt,
+      })) as PatientSummary[];
+
+    // Also merge any locally created patients
+    const localList = await getLocalRoster();
+    const merged = [...remoteList];
+    for (const lp of localList) {
+      if (!merged.some((m) => m.uid === lp.uid)) {
+        merged.push(lp);
+      }
+    }
+    return merged;
+  } catch (err) {
+    console.warn('[Firestore] Fallback to local roster:', err);
+    return getLocalRoster();
+  }
 }
 
 // ─── Admin: Delete Patient ────────────────────────────────────────────────────
 
 /**
- * Delete a patient's Firestore profile document.
- * Note: deleting sub-collection records requires a Cloud Function in production.
- * For now this deletes only the top-level patient document.
+ * Delete a patient's Firestore profile document and local roster entry.
  */
 export async function adminDeletePatient(patientId: string): Promise<void> {
+  await removeLocalPatientFromRoster(patientId);
   if (!isFirebaseConfigured) return;
-  await deleteDoc(doc(db, 'patients', patientId));
+  try {
+    await deleteDoc(doc(db, 'patients', patientId));
+  } catch (err) {
+    console.warn('[Firestore] Error deleting patient doc:', err);
+  }
 }
 
 // ─── Legacy compat no-ops (signature changed) ─────────────────────────────────

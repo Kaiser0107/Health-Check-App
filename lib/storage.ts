@@ -106,3 +106,62 @@ export async function clearPatientData(patientId: string): Promise<void> {
     throw err;
   }
 }
+
+// ─── Local Patients Roster (for Admin list & offline support) ──────────────────
+
+const ROSTER_KEY = '@health_check:all_patients_roster';
+
+export interface RosterPatient {
+  uid: string;
+  email: string;
+  fullName: string;
+  patientId?: string;
+  createdAt: string;
+}
+
+/**
+ * Retrieve list of all registered patients saved locally.
+ */
+export async function getLocalRoster(): Promise<RosterPatient[]> {
+  try {
+    const json = await AsyncStorage.getItem(ROSTER_KEY);
+    return json ? JSON.parse(json) : [];
+  } catch (err) {
+    console.error('[Storage] Error reading roster:', err);
+    return [];
+  }
+}
+
+/**
+ * Add or update a patient in the local roster.
+ */
+export async function saveLocalPatientToRoster(patient: RosterPatient): Promise<void> {
+  try {
+    const current = await getLocalRoster();
+    const idx = current.findIndex((p) => p.uid === patient.uid);
+    let updated: RosterPatient[];
+    if (idx >= 0) {
+      updated = [...current];
+      updated[idx] = { ...updated[idx], ...patient };
+    } else {
+      updated = [patient, ...current];
+    }
+    await AsyncStorage.setItem(ROSTER_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.error('[Storage] Error saving to roster:', err);
+  }
+}
+
+/**
+ * Remove a patient from the local roster.
+ */
+export async function removeLocalPatientFromRoster(uid: string): Promise<void> {
+  try {
+    const current = await getLocalRoster();
+    const updated = current.filter((p) => p.uid !== uid);
+    await AsyncStorage.setItem(ROSTER_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.error('[Storage] Error removing from roster:', err);
+  }
+}
+

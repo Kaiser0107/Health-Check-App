@@ -15,12 +15,13 @@ import React, {
   ReactNode,
 } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, isFirebaseConfigured } from '../lib/firebase';
 import {
   signIn as authSignIn,
   register as authRegister,
   signOut as authSignOut,
   resolveAppUser,
+  getLocalAuthSession,
   AppUser,
 } from '../lib/auth';
 
@@ -42,8 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Listen to Firebase auth state changes and resolve role
+  // Listen to auth state changes (Firebase or local session)
   useEffect(() => {
+    if (!isFirebaseConfigured) {
+      getLocalAuthSession()
+        .then((appUser) => setUser(appUser))
+        .catch(() => setUser(null))
+        .finally(() => setIsLoading(false));
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {

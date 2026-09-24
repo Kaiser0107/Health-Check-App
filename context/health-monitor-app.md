@@ -54,6 +54,9 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | **Splash Screen** | **Animated Drop Logo screen** (`app/splash.tsx`) | Branded entry point; appears on every app launch before auth check |
 | **Authentication** | **Firebase Email/Password** (`firebase/auth`) | Secure, persistent cloud auth; user stays signed in across app restarts |
 | **Login Screen** | **Dedicated screen** (`app/login.tsx`) — Sign In, Create Account, Forgot Password | Required gateway to the main app; sits between Splash and Tab Navigator |
+| **Auth** | `firebase/auth` (Email/Password) + Firestore role | Role resolved at registration from admin email whitelist |
+| **Admin Role** | Email whitelist in `constants/adminEmails.ts` | Simple, no backend needed; easy to update |
+| **Patient Data Scope** | `patientId` (Firebase UID) as storage key namespace | Prevents cross-patient data leakage on shared device |
 
 ---
 
@@ -82,6 +85,11 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 - [x] App runs on Android and iOS via Expo Go and Expo Snack without errors
 - [ ] Styles are in separate `StyleSheet` files — no inline styles, no NativeWind
 - [ ] No purple/violet hex codes in UI
+- [ ] Admin email whitelist correctly assigns admin role on registration
+- [ ] Admin can see all patients in the Patients tab
+- [ ] Admin can delete a patient record
+- [ ] Patient cannot see the Patients admin tab
+- [ ] Data is scoped per-patientId (no cross-patient data leakage)
 
 ---
 
@@ -102,6 +110,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Styling | React Native `StyleSheet` API | Native, separated from logic — no NativeWind |
 | Icons | `@expo/vector-icons` | Built into Expo SDK |
 | Date | `date-fns` | Lightweight date formatting |
+| Role System | `constants/adminEmails.ts` + Firestore `users/{uid}` | Whitelist-based admin detection at registration |
 
 > **Removed:** `nativewind`, `tailwindcss`, `firebase`, `firebase/auth`, `@hookform/resolvers`
 
@@ -119,6 +128,7 @@ Health Check App/
 │   │   ├── my-info.tsx           # My Information (personal profile)
 │   │   ├── log-health.tsx        # Log Health Data
 │   │   ├── history.tsx           # Health History + Charts
+│   │   ├── patients.tsx          # Admin-only: Patient list with CRUD
 │   │   └── settings.tsx          # Settings
 │   ├── _layout.tsx               # Root layout (auth state gate → Splash → Login → Tabs)
 │   └── +not-found.tsx
@@ -154,6 +164,7 @@ Health Check App/
 ├── lib/
 │   ├── firebase.ts               # Firebase Firestore init
 │   ├── firestore.ts              # CRUD helpers
+│   ├── auth.ts                   # signIn, register, signOut, resolveAppUser
 │   ├── bmi.ts                    # BMI calculation + category logic
 │   └── uuid.ts                   # UUID generation + AsyncStorage persistence
 │
@@ -163,14 +174,16 @@ Health Check App/
 │   └── useBMI.ts
 │
 ├── context/
-│   └── AppContext.tsx             # Global state (user info + records)
+│   ├── AppContext.tsx             # Global state (user info + records)
+│   └── AuthContext.tsx            # Firebase auth state + role
 │
 ├── schemas/
 │   └── health.schema.ts          # Zod schemas for all inputs
 │
 ├── constants/
 │   ├── thresholds.ts             # Normal ranges per vital
-│   └── theme.ts                  # Design tokens (colours, spacing, font sizes)
+│   ├── theme.ts                  # Design tokens (colours, spacing, font sizes)
+│   └── adminEmails.ts            # Admin email whitelist
 │
 ├── context/ (project docs)
 │   ├── patient_health_monitoring_app_requirements.md

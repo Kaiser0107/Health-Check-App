@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if the requesting user is an admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper: check the requesting user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // ── User Documents (users/{uid}) ──────────────────────────────────────
+    // Users can read their own doc; admins can read all.
+    // Users can only write their own doc (role is set at registration time).
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── Patient Profiles (patients/{patientId}) ───────────────────────────
+    // Patients: read/write their own profile only.
+    // Admins: read/write any patient profile.
+    match /patients/{patientId} {
+      allow read, write: if isSignedIn() &&
+        (request.auth.uid == patientId || isAdmin());
+    }
+
+    // ── Health Records (patients/{patientId}/records/{recordId}) ─────────
+    // Same rules as patient profile.
+    match /patients/{patientId}/records/{recordId} {
+      allow read, write: if isSignedIn() &&
+        (request.auth.uid == patientId || isAdmin());
+    }
+  }
+}

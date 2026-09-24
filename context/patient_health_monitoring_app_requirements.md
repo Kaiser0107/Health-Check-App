@@ -47,7 +47,7 @@ App Launch
 - **Authentication method:** Firebase Email/Password (`firebase/auth`)
 - Fields: Email address, Password
 - Actions: **Sign In**, **Create Account** (register new user), **Forgot Password** (reset via email)
-- On successful sign-in → navigates to the main tab navigator
+- On successful sign-in → navigates to the main tab navigator with **role-based routing**: Admins are routed to the **Patients** tab; Patients are routed to the **Dashboard**
 - On failed sign-in → shows inline error message (no native Alert)
 - Auth state persisted by Firebase SDK — returning users go straight to main app (skip login re-entry)
 - Implemented as a dedicated screen: `app/login.tsx`
@@ -192,3 +192,30 @@ Component-based structure with the following screens:
 * Fast, lightweight, and fully offline-capable after initial sign-in.
 * Health records are scoped to the signed-in Firebase UID.
 * Guaranteed 100% compatible with Expo Snack and Expo Go without cloud database setup.
+
+---
+
+## 8. USER ROLES
+
+### Admin Role
+- Assigned by email whitelist in `constants/adminEmails.ts`
+- Admin accounts are **management-only** — no personal health records
+- Can: Create, Read, Update, Delete any patient profile
+- Can: View any patient's health dashboard and history
+- Can: Log health for any selected patient
+- Cannot: Have their own health record
+- Sees: Dashboard (selected patient), Patients (CRUD list), Log Health, History, Settings
+
+### Patient Role
+- All non-admin accounts are Patients
+- Can: View and edit their own profile info
+- Can: Log their own health vitals
+- Can: View their own dashboard and history
+- Cannot: View other patients' data
+- Cannot: Access the Patients admin tab
+- Sees: Dashboard (own), My Info, Log Health, History, Settings
+
+### Role Assignment
+- At registration: email is checked against `constants/adminEmails.ts`
+- Role is stored in Firestore `users/{uid}/role`
+- Role persists across app restarts via Firebase Auth + Firestore

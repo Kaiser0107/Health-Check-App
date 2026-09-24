@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -11,10 +12,18 @@ interface TabIconProps {
 }
 
 function TabIcon({ name, focused, color, size }: TabIconProps) {
-  return <Ionicons name={focused ? name : (`${name}-outline` as IoniconsName)} size={size} color={color} />;
+  return (
+    <Ionicons
+      name={focused ? name : (`${name}-outline` as IoniconsName)}
+      size={size}
+      color={color}
+    />
+  );
 }
 
 export default function TabLayout() {
+  const { isAdmin } = useAuth();
+
   return (
     <Tabs
       screenOptions={{
@@ -24,6 +33,7 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
+      {/* ─── Dashboard — both roles ─────────────────────────────────────── */}
       <Tabs.Screen
         name="index"
         options={{
@@ -33,15 +43,32 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* ─── Patients — admin only ──────────────────────────────────────── */}
+      <Tabs.Screen
+        name="patients"
+        options={{
+          title: 'Patients',
+          href: isAdmin ? undefined : null, // hide tab for patients
+          tabBarIcon: ({ focused, color, size }) => (
+            <TabIcon name="people" focused={focused} color={color} size={size} />
+          ),
+        }}
+      />
+
+      {/* ─── My Info — patient only (admin manages via Patients tab) ────── */}
       <Tabs.Screen
         name="my-info"
         options={{
           title: 'My Info',
+          href: isAdmin ? null : undefined, // hide for admins
           tabBarIcon: ({ focused, color, size }) => (
             <TabIcon name="person" focused={focused} color={color} size={size} />
           ),
         }}
       />
+
+      {/* ─── Log Health — both roles ────────────────────────────────────── */}
       <Tabs.Screen
         name="log-health"
         options={{
@@ -51,6 +78,8 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* ─── History — both roles ───────────────────────────────────────── */}
       <Tabs.Screen
         name="history"
         options={{
@@ -60,6 +89,8 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* ─── Settings — both roles ──────────────────────────────────────── */}
       <Tabs.Screen
         name="settings"
         options={{
@@ -72,4 +103,3 @@ export default function TabLayout() {
     </Tabs>
   );
 }
-

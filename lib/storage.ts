@@ -1,24 +1,29 @@
+/**
+ * Per-patient AsyncStorage key factory.
+ * All storage is now scoped to a patientId (Firebase UID for patient role,
+ * or the selected patient's UID for admin role).
+ * This prevents data leakage between patients on the same device.
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HealthRecord, MyInfo } from '../schemas/health.schema';
 
-const STORAGE_KEYS = {
-  MY_INFO: '@health_check:my_info',
-  RECORDS: '@health_check:records',
-};
+function storageKeys(patientId: string) {
+  return {
+    MY_INFO: `@health_check:${patientId}:my_info`,
+    RECORDS: `@health_check:${patientId}:records`,
+  };
+}
 
-/**
- * Generate a unique ID for local health records.
- */
 function generateRecordId(): string {
   return 'rec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
 }
 
 /**
- * Retrieve personal profile from local storage.
+ * Retrieve personal profile for a specific patient from local storage.
  */
-export async function getLocalMyInfo(): Promise<MyInfo | null> {
+export async function getLocalMyInfo(patientId: string): Promise<MyInfo | null> {
   try {
-    const json = await AsyncStorage.getItem(STORAGE_KEYS.MY_INFO);
+    const json = await AsyncStorage.getItem(storageKeys(patientId).MY_INFO);
     return json ? JSON.parse(json) : null;
   } catch (err) {
     console.error('[Storage] Error reading my_info:', err);
@@ -27,11 +32,11 @@ export async function getLocalMyInfo(): Promise<MyInfo | null> {
 }
 
 /**
- * Save personal profile to local storage.
+ * Save personal profile for a specific patient to local storage.
  */
-export async function saveLocalMyInfo(info: MyInfo): Promise<void> {
+export async function saveLocalMyInfo(patientId: string, info: MyInfo): Promise<void> {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.MY_INFO, JSON.stringify(info));
+    await AsyncStorage.setItem(storageKeys(patientId).MY_INFO, JSON.stringify(info));
   } catch (err) {
     console.error('[Storage] Error saving my_info:', err);
     throw err;
@@ -39,11 +44,11 @@ export async function saveLocalMyInfo(info: MyInfo): Promise<void> {
 }
 
 /**
- * Retrieve all health records from local storage, sorted newest first.
+ * Retrieve all health records for a specific patient, sorted newest first.
  */
-export async function getLocalRecords(): Promise<HealthRecord[]> {
+export async function getLocalRecords(patientId: string): Promise<HealthRecord[]> {
   try {
-    const json = await AsyncStorage.getItem(STORAGE_KEYS.RECORDS);
+    const json = await AsyncStorage.getItem(storageKeys(patientId).RECORDS);
     if (!json) return [];
     const list: HealthRecord[] = JSON.parse(json);
     return list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -54,17 +59,17 @@ export async function getLocalRecords(): Promise<HealthRecord[]> {
 }
 
 /**
- * Append a new health record to local storage.
+ * Append a new health record for a specific patient to local storage.
  */
-export async function addLocalRecord(recordData: Omit<HealthRecord, 'id'>): Promise<HealthRecord> {
+export async function addLocalRecord(
+  patientId: string,
+  recordData: Omit<HealthRecord, 'id'>
+): Promise<HealthRecord> {
   try {
-    const existing = await getLocalRecords();
-    const newRecord: HealthRecord = {
-      ...recordData,
-      id: generateRecordId(),
-    };
+    const existing = await getLocalRecords(patientId);
+    const newRecord: HealthRecord = { ...recordData, id: generateRecordId() };
     const updated = [newRecord, ...existing];
-    await AsyncStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(updated));
+    await AsyncStorage.setItem(storageKeys(patientId).RECORDS, JSON.stringify(updated));
     return newRecord;
   } catch (err) {
     console.error('[Storage] Error adding record:', err);
@@ -73,13 +78,13 @@ export async function addLocalRecord(recordData: Omit<HealthRecord, 'id'>): Prom
 }
 
 /**
- * Remove a specific record by ID.
+ * Remove a specific record by ID for a given patient.
  */
-export async function deleteLocalRecord(id: string): Promise<void> {
+export async function deleteLocalRecord(patientId: string, id: string): Promise<void> {
   try {
-    const existing = await getLocalRecords();
+    const existing = await getLocalRecords(patientId);
     const updated = existing.filter((r) => r.id !== id);
-    await AsyncStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(updated));
+    await AsyncStorage.setItem(storageKeys(patientId).RECORDS, JSON.stringify(updated));
   } catch (err) {
     console.error('[Storage] Error deleting record:', err);
     throw err;
@@ -87,16 +92,17 @@ export async function deleteLocalRecord(id: string): Promise<void> {
 }
 
 /**
- * Clear all personal data and records from local storage.
+ * Clear all personal data and records for a specific patient.
  */
-export async function clearAllLocalData(): Promise<void> {
+export async function clearPatientData(patientId: string): Promise<void> {
   try {
+    const keys = storageKeys(patientId);
     await Promise.all([
-      AsyncStorage.removeItem(STORAGE_KEYS.MY_INFO),
-      AsyncStorage.removeItem(STORAGE_KEYS.RECORDS),
+      AsyncStorage.removeItem(keys.MY_INFO),
+      AsyncStorage.removeItem(keys.RECORDS),
     ]);
   } catch (err) {
-    console.error('[Storage] Error clearing data:', err);
+    console.error('[Storage] Error clearing patient data:', err);
     throw err;
   }
 }

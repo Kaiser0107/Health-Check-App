@@ -1,7 +1,7 @@
 # Patient Health Monitoring App — Build Roadmap
 
 > **File:** `context/roadmap.md`
-> **Created:** 2026-09-19
+> **Created:** 2026-09-19 | **Updated:** 2026-09-24
 > **Purpose:** Incremental build tracker — one milestone at a time. Each milestone is self-contained, testable, and must be verified before moving to the next.
 >
 > 📌 Related files:
@@ -32,15 +32,16 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | # | Milestone | Focus | Status |
 |---|---|---|---|
 | 1 | Project Bootstrap | Expo + folders + UUID + tabs | ✅ Done |
-| 2 | Data & Logic Layer | Schemas, BMI, thresholds, Storage helpers, Context | ✅ Done |
-| 3 | Patient Information Screen | Patient profile form — save & load from storage | ✅ Done |
-| 4 | Log Health Screen | Vitals form — BMI auto-calc — save record | ✅ Done |
+| 2 | Data & Logic Layer | Schemas, BMI, thresholds, Storage helpers, Context | 🔄 Revisited (storage keys now per-patientId) |
+| 3 | Patient Information Screen | Patient profile form — save & load from storage | 🔄 Revisited (role-split: patient edits own, admin manages) |
+| 4 | Log Health Screen | Vitals form — BMI auto-calc — save record | 🔄 Revisited (records keyed to patientId) |
 | 5 | Dashboard Screen | Read latest record — patient summary, vitals + status | ⬜ Not Started |
 | 6 | History Screen | List past records — timestamps — no charts yet | ⬜ Not Started |
 | 7 | Settings Screen | Clear all data — about info | ⬜ Not Started |
 | 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ⬜ Not Started |
 | **9** | **Splash Screen** | **Drop Logo animation — auto-transition to Login** | ⬜ Not Started |
 | **10** | **Login Screen** | **Firebase Email/Password Auth — Sign In / Create Account** | ⬜ Not Started |
+| **11** | **Role System** | **AuthContext + Firebase Auth + Admin/Patient role routing** | ✅ Done |
 
 **Status key:** ⬜ Not Started · 🔄 In Progress · ✅ Done · 🚫 Blocked
 
@@ -480,3 +481,67 @@ npm install react-native-gifted-charts
 - [ ] Sign-out from Settings clears auth state and returns to login screen
 - [ ] `npx tsc --noEmit` — no errors
 
+---
+
+## Milestone 11 — Role System (Admin / Patient)
+
+> **Goal:** Firebase Auth wired end-to-end. Admin email whitelist assigns roles at registration.
+> Role stored in Firestore. Navigation, AppContext, and storage all role-aware.
+
+### Work Completed
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 11.1 | Install `firebase` package | `package.json` | ✅ |
+| 11.2 | Wire real Firebase init with EXPO_PUBLIC_ env vars | `lib/firebase.ts` | ✅ |
+| 11.3 | Create `lib/auth.ts` — signIn, register, signOut, resolveAppUser | `lib/auth.ts` | ✅ |
+| 11.4 | Create `constants/adminEmails.ts` — admin whitelist | `constants/adminEmails.ts` | ✅ |
+| 11.5 | Create `context/AuthContext.tsx` — onAuthStateChanged + role | `context/AuthContext.tsx` | ✅ |
+| 11.6 | Update `context/AppContext.tsx` — role-aware, per-patientId ops | `context/AppContext.tsx` | ✅ |
+| 11.7 | Update `lib/storage.ts` — all keys namespaced by patientId | `lib/storage.ts` | ✅ |
+| 11.8 | Update `lib/firestore.ts` — real Firestore calls + admin helpers | `lib/firestore.ts` | ✅ |
+| 11.9 | Add `UserRole`, `PatientSummary`, `LoginSchema`, `RegisterSchema` | `schemas/health.schema.ts` | ✅ |
+| 11.10 | Update `app/_layout.tsx` — AuthProvider + AuthGate + AppProvider | `app/_layout.tsx` | ✅ |
+| 11.11 | Create `app/login.tsx` — Sign In / Create Account / Forgot Password | `app/login.tsx` | ✅ |
+| 11.12 | Create `app/splash.tsx` — Drop Logo animation | `app/splash.tsx` | ✅ |
+| 11.13 | Update `app/(tabs)/_layout.tsx` — role-conditional tab visibility | `app/(tabs)/_layout.tsx` | ✅ |
+| 11.14 | Create `app/(tabs)/patients.tsx` — Admin patient list + delete | `app/(tabs)/patients.tsx` | ✅ |
+| 11.15 | Create `.env.example` — Firebase env var template | `.env.example` | ✅ |
+
+### Pending: Firebase Project Setup (User Action Required)
+- [ ] User creates Firebase project at console.firebase.google.com
+- [ ] Enable Email/Password auth in Authentication → Sign-in method
+- [ ] Create `.env` from `.env.example` and fill in credentials
+- [ ] Add admin emails to `constants/adminEmails.ts`
+- [ ] Set up Firestore Security Rules (see rules template below)
+
+### Firestore Security Rules Template
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read their own user doc; admins can read all
+    match /users/{uid} {
+      allow read: if request.auth.uid == uid
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if request.auth.uid == uid;
+    }
+    // Patients: own data only; admins: any patient
+    match /patients/{patientId} {
+      allow read, write: if request.auth.uid == patientId
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    match /patients/{patientId}/records/{recordId} {
+      allow read, write: if request.auth.uid == patientId
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
+```
+
+### Verify Before Closing Milestone
+- [ ] `npx tsc --noEmit` — 0 errors ✅
+- [ ] Admin email in whitelist → registers as admin → sees Patients tab
+- [ ] Non-admin email → registers as patient → sees My Info tab, not Patients tab
+- [ ] Sign out from Settings → returns to login screen
+- [ ] Returning signed-in user → skips login, goes directly to correct tab view

@@ -147,3 +147,46 @@ export type LogHealthInput = z.input<typeof LogHealthInputSchema>;
 
 export type VitalStatus = 'normal' | 'warning' | 'critical';
 
+// ─── Role & Auth Types ────────────────────────────────────────────────────────
+
+export const UserRoleSchema = z.enum(['admin', 'patient']);
+export type UserRole = z.infer<typeof UserRoleSchema>;
+
+/** Lightweight summary of a patient for the admin patients list. */
+export const PatientSummarySchema = z.object({
+  uid: z.string(),          // Firebase UID of the patient user
+  email: z.string().email(),
+  fullName: z.string(),
+  patientId: z.string().optional(),
+  createdAt: z.string(),    // ISO timestamp
+});
+export type PatientSummary = z.infer<typeof PatientSummarySchema>;
+
+/** Firestore user document shape (users/{uid}). */
+export const FirestoreUserSchema = z.object({
+  uid: z.string(),
+  email: z.string(),
+  role: UserRoleSchema,
+  createdAt: z.string(),
+});
+export type FirestoreUser = z.infer<typeof FirestoreUserSchema>;
+
+// ─── Login / Register Schemas ─────────────────────────────────────────────────
+
+export const LoginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+export type LoginInput = z.infer<typeof LoginSchema>;
+
+export const RegisterSchema = z
+  .object({
+    email: z.string().email('Please enter a valid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string().min(6, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+export type RegisterInput = z.infer<typeof RegisterSchema>;

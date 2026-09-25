@@ -16,54 +16,95 @@ import {
   orderBy,
   Timestamp,
 } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from './firebase';
+import { db, getDb, isFirebaseConfigured } from './firebase';
 import { HealthRecord, MyInfo, PatientSummary } from '../schemas/health.schema';
+import { getLocalRoster, removeLocalPatientFromRoster } from './storage';
+
+/** Strip undefined values from objects before writing to Firestore to prevent invalid data errors. */
+function cleanFirestoreData<T extends Record<string, any>>(data: T): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
 
 // ─── Patient Profile ──────────────────────────────────────────────────────────
 
-export async function syncSaveMyInfo(patientId: string, info: MyInfo): Promise<void> {
-  if (!isFirebaseConfigured) return;
-  await setDoc(doc(db, 'patients', patientId), info, { merge: true });
+export async function syncSaveMyInfo(patientId: string, info: MyInfo & { username?: string }): Promise<void> {
+  if (!isFirebaseConfigured || !patientId) return;
+  try {
+    const firestore = getDb() || db;
+    if (!firestore) return;
+    const clean = cleanFirestoreData(info);
+    await setDoc(doc(firestore, 'patients', patientId), clean, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore] syncSaveMyInfo error:', err);
+  }
 }
 
 export async function syncGetMyInfo(patientId: string): Promise<MyInfo | null> {
-  if (!isFirebaseConfigured) return null;
-  const snap = await getDoc(doc(db, 'patients', patientId));
-  return snap.exists() ? (snap.data() as MyInfo) : null;
+  if (!isFirebaseConfigured || !patientId) return null;
+  try {
+    const firestore = getDb() || db;
+    if (!firestore) return null;
+    const snap = await getDoc(doc(firestore, 'patients', patientId));
+    return snap.exists() ? (snap.data() as MyInfo) : null;
+  } catch (err) {
+    console.warn('[Firestore] syncGetMyInfo error:', err);
+    return null;
+  }
 }
 
 // ─── Health Records ───────────────────────────────────────────────────────────
 
 export async function syncAddRecord(patientId: string, record: HealthRecord): Promise<void> {
-  if (!isFirebaseConfigured) return;
-  const ref = collection(db, 'patients', patientId, 'records');
-  await addDoc(ref, { ...record, syncedAt: Timestamp.now() });
+  if (!isFirebaseConfigured || !patientId) return;
+  try {
+    const firestore = getDb() || db;
+    if (!firestore) return;
+    const ref = collection(firestore, 'patients', patientId, 'records');
+    const clean = cleanFirestoreData({ ...record, syncedAt: Timestamp.now() });
+    await addDoc(ref, clean);
+  } catch (err) {
+    console.warn('[Firestore] syncAddRecord error:', err);
+  }
 }
 
 export async function syncGetRecords(patientId: string): Promise<HealthRecord[]> {
-  if (!isFirebaseConfigured) return [];
-  const ref = collection(db, 'patients', patientId, 'records');
-  const q = query(ref, orderBy('timestamp', 'desc'));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as HealthRecord));
+  if (!isFirebaseConfigured || !patientId) return [];
+  try {
+    const firestore = getDb() || db;
+    if (!firestore) return [];
+    const ref = collection(firestore, 'patients', patientId, 'records');
+    const q = query(ref, orderBy('timestamp', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as HealthRecord));
+  } catch (err) {
+    console.warn('[Firestore] syncGetRecords error:', err);
+    return [];
+  }
 }
 
 export async function syncCreatePatientDoc(uid: string, username: string, info: MyInfo): Promise<void> {
-  if (!isFirebaseConfigured) return;
+  if (!isFirebaseConfigured || !uid) return;
   try {
-    await setDoc(doc(db, 'patients', uid), {
+    const firestore = getDb() || db;
+    if (!firestore) return;
+    const clean = cleanFirestoreData({
       ...info,
       username,
       createdAt: new Date().toISOString(),
     });
+    await setDoc(doc(firestore, 'patients', uid), clean);
   } catch (err) {
     console.warn('[Firestore] syncCreatePatientDoc error:', err);
   }
 }
 
 // ─── Admin: Patient List ──────────────────────────────────────────────────────
-
-import { getLocalRoster, removeLocalPatientFromRoster } from './storage';
 
 /**
  * Fetch a lightweight summary list of all registered patients.
@@ -74,7 +115,10 @@ export async function adminGetAllPatients(): Promise<PatientSummary[]> {
     return getLocalRoster();
   }
   try {
-    const snap = await getDocs(collection(db, 'patients'));
+    const firestore = getDb() || db;
+    if (!firestore) return getLocalRoster();
+
+    const snap = await getDocs(collection(firestore, 'patients'));
     const remoteList = snap.docs.map((d) => {
       const data = d.data();
       return {
@@ -90,9 +134,20 @@ export async function adminGetAllPatients(): Promise<PatientSummary[]> {
       };
     }) as PatientSummary[];
 
-    // Also merge any locally created patients
+    // Also merge any locally created or updated patients
     const localList = await getLocalRoster();
-    const merged = [...remoteList];
+    const localMap = new Map(localList.map((lp) => [lp.uid, lp]));
+    const merged = remoteList.map((rem) => {
+      const loc = localMap.get(rem.uid);
+      if (!loc) return rem;
+      return {
+        ...rem,
+        ...loc,
+        uid: rem.uid,
+        username: loc.username || rem.username,
+        profilePicture: loc.profilePicture ?? rem.profilePicture,
+      };
+    });
     for (const lp of localList) {
       if (!merged.some((m) => m.uid === lp.uid)) {
         merged.push(lp);
@@ -112,9 +167,11 @@ export async function adminGetAllPatients(): Promise<PatientSummary[]> {
  */
 export async function adminDeletePatient(patientId: string): Promise<void> {
   await removeLocalPatientFromRoster(patientId);
-  if (!isFirebaseConfigured) return;
+  if (!isFirebaseConfigured || !patientId) return;
   try {
-    await deleteDoc(doc(db, 'patients', patientId));
+    const firestore = getDb() || db;
+    if (!firestore) return;
+    await deleteDoc(doc(firestore, 'patients', patientId));
   } catch (err) {
     console.warn('[Firestore] Error deleting patient doc:', err);
   }
@@ -126,3 +183,4 @@ export async function syncDeleteAllData(patientId: string): Promise<void> {
   // Local data cleared via clearPatientData(patientId) in storage.ts
   // Firestore delete handled by adminDeletePatient for admin flows
 }
+

@@ -17,7 +17,7 @@ export const firebaseConfig = {
 };
 
 // Prevent re-initialization on hot reload
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = (() => {
   try {
@@ -29,5 +29,16 @@ export const auth = (() => {
   }
 })();
 
-export const db = getFirestore(app);
 export const isFirebaseConfigured = Boolean(process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID);
+
+export function getDb() {
+  try {
+    if (!isFirebaseConfigured) return null;
+    return getFirestore(app);
+  } catch (err) {
+    console.warn('[Firebase] getDb error:', err);
+    return null;
+  }
+}
+
+export const db = isFirebaseConfigured ? getFirestore(app) : (null as any);

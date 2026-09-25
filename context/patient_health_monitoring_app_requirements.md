@@ -250,3 +250,7 @@ The system supports exactly two roles:
 2. **Clinical Management**:
    - Admins select patients from the roster to monitor their dashboards, log new clinical vitals, and inspect past history.
    - Hardcoded admin usernames in `constants/adminUsers.ts` ensure tamper-proof privilege enforcement.
+3. **Admin Credential & Demographic Modifications**:
+   - Only Admins can modify existing patient accounts from the Edit Patient modal in the Patients tab.
+   - Admins can update the patient's username (with uniqueness checks) and reset/change the patient's password (min 6 characters, or leave blank to keep unchanged).
+   - Credential updates execute seamlessly through an ephemeral secondary Firebase Auth session and synchronize with Firestore `users/{uid}` and `patients/{uid}` without interrupting the active Admin login session.

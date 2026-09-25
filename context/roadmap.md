@@ -642,3 +642,32 @@ service cloud.firestore {
 - [x] Launching Expo immediately renders drop logo splash screen with no navigation errors
 - [x] Browser reload cleanly routes to `/` and replays drop logo before login
 - [x] Sign out navigates to `/splash` with drop logo animation
+
+---
+
+## Milestone 15 — Admin Patient Credential Management & Firestore Hardening
+
+> **Goal:** Fix Firebase `doc()` argument error when updating patient avatars, resolve dynamic roster card re-rendering delays, and allow Administrators to modify patient usernames and passwords from the Edit Patient modal.
+
+### Work Completed
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 15.1 | Expand validation schema with `UpdatePatientAccountSchema` & `UpdatePatientAccountInput` supporting optional credentials and full demographics | `schemas/health.schema.ts` | ✅ |
+| 15.2 | Export Firebase `app` and add safe `getDb()` getter to guarantee valid Firestore instance before any query or write operation | `lib/firebase.ts` | ✅ |
+| 15.3 | Sanitize Firestore writes by removing `undefined` keys (`cleanFirestoreData`) and wrap all operations in safe `try/catch` handlers | `lib/firestore.ts` | ✅ |
+| 15.4 | Implement `adminUpdatePatientCredentials` using secondary Firebase App pattern to update patient email/password and Firestore doc without disturbing active Admin session | `lib/auth.ts` | ✅ |
+| 15.5 | Update `AppContext.tsx` `updatePatient` method with local-first precedence: immediate local storage update, in-memory roster update, and non-blocking background Firestore sync | `context/AppContext.tsx` | ✅ |
+| 15.6 | Redesign Edit Patient Modal in `app/(tabs)/patients.tsx` into two distinct sections: Section 1 (Account Credentials with show/hide password toggle) and Section 2 (Demographic Profile) | `app/(tabs)/patients.tsx` | ✅ |
+| 15.7 | Add `extraData={patients}` to `FlatList` in `patients.tsx` and merge local roster updates over remote in `adminGetAllPatients()` to guarantee instant reactive re-rendering of patient cards and avatars | `app/(tabs)/patients.tsx`, `lib/firestore.ts` | ✅ |
+| 15.8 | Keep context documentation and project specifications strictly up-to-date | `context/*` | ✅ |
+
+### Verify Before Closing Milestone
+- [x] `npx tsc --noEmit` — 0 errors ✅
+- [x] Changing profile picture saves without `doc()` argument error
+- [x] Dynamic display of patient card (including avatar and username) updates immediately upon save
+- [x] Admin can edit patient username with uniqueness validation
+- [x] Admin can optionally enter a new password (min 6 chars) or leave blank to keep unchanged
+- [x] Secondary Firebase App pattern handles credential updates without disrupting Admin login session
+- [x] Local-first architecture guarantees offline and network-resilient behavior
+

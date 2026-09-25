@@ -23,6 +23,8 @@ import {
   PatientSummary,
   CreatePatientAccountSchema,
   CreatePatientAccountInput,
+  UpdatePatientAccountSchema,
+  UpdatePatientAccountInput,
   MyInfoSchema,
   MyInfo,
 } from '../../schemas/health.schema';
@@ -63,6 +65,9 @@ export default function PatientsScreen() {
   // ─── Edit Patient Modal State ─────────────────────────────────────────────
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientSummary | null>(null);
+  const [editUsername, setEditUsername] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [editFullName, setEditFullName] = useState('');
   const [editAge, setEditAge] = useState('');
   const [editSex, setEditSex] = useState<'Male' | 'Female'>('Male');
@@ -148,6 +153,9 @@ export default function PatientsScreen() {
   const handleOpenEditModal = async (patient: PatientSummary) => {
     setEditingPatient(patient);
     setEditFormError(null);
+    setEditUsername(patient.username || '');
+    setEditPassword('');
+    setShowEditPassword(false);
 
     // Load full profile details from storage
     const local = await getLocalMyInfo(patient.uid);
@@ -225,6 +233,8 @@ export default function PatientsScreen() {
     if (!editingPatient) return;
 
     const rawData = {
+      username: editUsername.trim() || undefined,
+      newPassword: editPassword.trim() || undefined,
       fullName: editFullName.trim(),
       age: editAge.trim() ? parseInt(editAge.trim(), 10) : undefined,
       sex: editSex,
@@ -235,7 +245,7 @@ export default function PatientsScreen() {
       profilePicture: editProfilePicture,
     };
 
-    const parseResult = MyInfoSchema.safeParse(rawData);
+    const parseResult = UpdatePatientAccountSchema.safeParse(rawData);
     if (!parseResult.success) {
       const firstIssue = parseResult.error.issues[0];
       setEditFormError(firstIssue ? `${firstIssue.path.join('.')}: ${firstIssue.message}` : 'Validation error.');
@@ -244,18 +254,20 @@ export default function PatientsScreen() {
 
     setEditFormError(null);
     try {
-      const input: MyInfo = parseResult.data;
+      const input: UpdatePatientAccountInput = parseResult.data;
       await updatePatient(editingPatient.uid, input);
+      await refreshPatients();
+      const updatedUsername = input.username || editingPatient.username;
       setEditModalVisible(false);
       setEditingPatient(null);
 
       if (Platform.OS === 'web') {
-        window.alert(`Patient profile for @${editingPatient.username} updated successfully!`);
+        window.alert(`Patient account for @${updatedUsername} updated successfully!`);
       } else {
-        Alert.alert('Profile Updated', `Patient profile for @${editingPatient.username} updated successfully!`);
+        Alert.alert('Account Updated', `Patient account for @${updatedUsername} updated successfully!`);
       }
     } catch (err: any) {
-      setEditFormError(err?.message || 'Failed to update patient profile.');
+      setEditFormError(err?.message || 'Failed to update patient account.');
     }
   };
 
@@ -382,6 +394,7 @@ export default function PatientsScreen() {
       ) : (
         <FlatList
           data={patients}
+          extraData={patients}
           keyExtractor={(item) => item.uid}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
@@ -574,9 +587,9 @@ export default function PatientsScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>Edit Patient Information</Text>
+                <Text style={styles.modalTitle}>Edit Patient Account</Text>
                 <Text style={styles.modalSubtitle}>
-                  Updating demographics for @{editingPatient?.username || 'patient'}
+                  Updating credentials & demographics for @{editingPatient?.username || 'patient'}
                 </Text>
               </View>
               <TouchableOpacity
@@ -597,107 +610,156 @@ export default function PatientsScreen() {
                 </View>
               )}
 
-              {/* Profile Picture */}
-              <AvatarPicker
-                uri={editProfilePicture}
-                name={editFullName || editingPatient?.fullName || 'Patient'}
-                onChange={setEditProfilePicture}
-                label="Patient Profile Picture"
-              />
+              {/* Section 1: Account Credentials */}
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>1. Account Credentials</Text>
 
-              <Text style={styles.fieldLabel}>Full Name *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={editFullName}
-                onChangeText={setEditFullName}
-                placeholder="e.g. John Doe"
-                placeholderTextColor="#94a3b8"
-              />
+                <Text style={styles.fieldLabel}>Username *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={editUsername}
+                  onChangeText={setEditUsername}
+                  placeholder="e.g. john_doe (3-20 chars)"
+                  placeholderTextColor="#94a3b8"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
 
-              {/* Date of Birth with Calendar Selector */}
-              <DatePickerField
-                label="Date of Birth *"
-                value={editDob}
-                onChange={(selectedDate, calculatedAge) => {
-                  setEditDob(selectedDate);
-                  if (calculatedAge !== undefined) {
-                    setEditAge(String(calculatedAge));
-                  }
-                }}
-                helperText="Calendar selector auto-recalculates patient age"
-              />
-
-              <View style={styles.twoCol}>
-                <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={styles.fieldLabel}>Age * (Auto-calculated)</Text>
+                <Text style={styles.fieldLabel}>New Password (Optional)</Text>
+                <View style={styles.passwordContainer}>
                   <TextInput
-                    style={styles.textInput}
-                    value={editAge}
-                    onChangeText={setEditAge}
-                    keyboardType="number-pad"
-                    placeholder="e.g. 45"
+                    style={styles.passwordInput}
+                    value={editPassword}
+                    onChangeText={setEditPassword}
+                    placeholder="Leave blank to keep current password"
                     placeholderTextColor="#94a3b8"
+                    secureTextEntry={!showEditPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
                   />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowEditPassword((prev) => !prev)}
+                    accessibilityLabel={showEditPassword ? 'Hide password' : 'Show password'}
+                  >
+                    <Ionicons
+                      name={showEditPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color="#64748b"
+                    />
+                  </TouchableOpacity>
                 </View>
-
-                <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={styles.fieldLabel}>Sex *</Text>
-                  <View style={styles.sexRow}>
-                    <TouchableOpacity
-                      style={[styles.sexChip, editSex === 'Male' && styles.sexChipActive]}
-                      onPress={() => setEditSex('Male')}
-                    >
-                      <Text
-                        style={[
-                          styles.sexChipText,
-                          editSex === 'Male' && styles.sexChipTextActive,
-                        ]}
-                      >
-                        Male
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.sexChip, editSex === 'Female' && styles.sexChipActive]}
-                      onPress={() => setEditSex('Female')}
-                    >
-                      <Text
-                        style={[
-                          styles.sexChipText,
-                          editSex === 'Female' && styles.sexChipTextActive,
-                        ]}
-                      >
-                        Female
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <Text style={styles.fieldHelper}>
+                  Min 6 characters if changing. Patient will use this password to sign in.
+                </Text>
               </View>
 
-              {/* Country Selector Phone Input (Defaults to PH +63) */}
-              <CountryPhoneInput
-                label="Contact Number *"
-                value={editContactNumber}
-                onChange={setEditContactNumber}
-                helperText="Country dial code formatted automatically"
-              />
+              {/* Section 2: Demographic Profile */}
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>2. Demographic Profile</Text>
 
-              <Text style={styles.fieldLabel}>Address *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={editAddress}
-                onChangeText={setEditAddress}
-                placeholder="e.g. 123 Health St, Manila"
-                placeholderTextColor="#94a3b8"
-              />
+                {/* Profile Picture */}
+                <AvatarPicker
+                  uri={editProfilePicture}
+                  name={editFullName || editUsername || 'Patient'}
+                  onChange={setEditProfilePicture}
+                  label="Patient Profile Picture (Optional)"
+                />
 
-              <Text style={styles.fieldLabel}>Hospital / Patient ID (Optional)</Text>
-              <TextInput
-                style={styles.textInput}
-                value={editPatientIdInput}
-                onChangeText={setEditPatientIdInput}
-                placeholder="e.g. PAT-2026-001"
-                placeholderTextColor="#94a3b8"
-              />
+                <Text style={styles.fieldLabel}>Full Name *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={editFullName}
+                  onChangeText={setEditFullName}
+                  placeholder="e.g. John Doe"
+                  placeholderTextColor="#94a3b8"
+                />
+
+                {/* Date of Birth with Calendar Selector */}
+                <DatePickerField
+                  label="Date of Birth *"
+                  value={editDob}
+                  onChange={(selectedDate, calculatedAge) => {
+                    setEditDob(selectedDate);
+                    if (calculatedAge !== undefined) {
+                      setEditAge(String(calculatedAge));
+                    }
+                  }}
+                  helperText="Calendar selector auto-recalculates patient age"
+                />
+
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={styles.fieldLabel}>Age * (Auto-calculated)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={editAge}
+                      onChangeText={setEditAge}
+                      keyboardType="number-pad"
+                      placeholder="e.g. 45"
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </View>
+
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text style={styles.fieldLabel}>Sex *</Text>
+                    <View style={styles.sexRow}>
+                      <TouchableOpacity
+                        style={[styles.sexChip, editSex === 'Male' && styles.sexChipActive]}
+                        onPress={() => setEditSex('Male')}
+                      >
+                        <Text
+                          style={[
+                            styles.sexChipText,
+                            editSex === 'Male' && styles.sexChipTextActive,
+                          ]}
+                        >
+                          Male
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.sexChip, editSex === 'Female' && styles.sexChipActive]}
+                        onPress={() => setEditSex('Female')}
+                      >
+                        <Text
+                          style={[
+                            styles.sexChipText,
+                            editSex === 'Female' && styles.sexChipTextActive,
+                          ]}
+                        >
+                          Female
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Country Selector Phone Input (Defaults to PH +63) */}
+                <CountryPhoneInput
+                  label="Contact Number *"
+                  value={editContactNumber}
+                  onChange={setEditContactNumber}
+                  helperText="Country dial code formatted automatically"
+                />
+
+                <Text style={styles.fieldLabel}>Address *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={editAddress}
+                  onChangeText={setEditAddress}
+                  placeholder="e.g. 123 Health St, Manila"
+                  placeholderTextColor="#94a3b8"
+                />
+
+                <Text style={styles.fieldLabel}>Hospital / Patient ID (Optional)</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={editPatientIdInput}
+                  onChangeText={setEditPatientIdInput}
+                  placeholder="e.g. PAT-2026-001"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
 
               <TouchableOpacity
                 style={[styles.saveButton, isSaving && { opacity: 0.6 }]}
@@ -899,6 +961,32 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     color: '#0f172a',
+    marginBottom: 12,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#0f172a',
+  },
+  eyeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  fieldHelper: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 0,
     marginBottom: 12,
   },
   twoCol: { flexDirection: 'row', marginBottom: 4 },

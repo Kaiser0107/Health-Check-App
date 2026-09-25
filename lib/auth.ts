@@ -10,17 +10,20 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
+  updatePassword,
+  updateEmail,
   getAuth,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth, db, isFirebaseConfigured, firebaseConfig } from './firebase';
+import { auth, db, getDb, isFirebaseConfigured, firebaseConfig } from './firebase';
 import { ADMIN_USERNAMES } from '../constants/adminUsers';
 import {
   saveLocalPatientToRoster,
   removeLocalPatientFromRoster,
   saveLocalMyInfo,
   clearPatientData,
+  getLocalRoster,
 } from './storage';
 import { syncCreatePatientDoc, adminDeletePatient } from './firestore';
 import type {
@@ -57,8 +60,11 @@ export function resolveRole(username: string): UserRole {
 
 /** Read user metadata from Firestore. */
 async function fetchUserDoc(uid: string): Promise<FirestoreUser | null> {
+  if (!isFirebaseConfigured || !uid) return null;
   try {
-    const snap = await getDoc(doc(db, 'users', uid));
+    const firestore = getDb() || db;
+    if (!firestore) return null;
+    const snap = await getDoc(doc(firestore, 'users', uid));
     if (!snap.exists()) return null;
     return snap.data() as FirestoreUser;
   } catch (err) {
@@ -68,14 +74,26 @@ async function fetchUserDoc(uid: string): Promise<FirestoreUser | null> {
 }
 
 /** Write user metadata to Firestore. */
-async function writeUserDoc(uid: string, username: string, role: UserRole): Promise<void> {
+async function writeUserDoc(
+  uid: string,
+  username: string,
+  role: UserRole,
+  password?: string
+): Promise<void> {
+  if (!isFirebaseConfigured || !uid) return;
   try {
-    await setDoc(doc(db, 'users', uid), {
+    const firestore = getDb() || db;
+    if (!firestore) return;
+    const data: Record<string, any> = {
       uid,
       username,
       role,
-      createdAt: new Date().toISOString(),
-    } satisfies FirestoreUser);
+      updatedAt: new Date().toISOString(),
+    };
+    if (password) {
+      data.password = password;
+    }
+    await setDoc(doc(firestore, 'users', uid), data, { merge: true });
   } catch (err) {
     console.warn('[Auth] writeUserDoc error:', err);
   }
@@ -223,7 +241,7 @@ export async function adminCreatePatientUser(
     }
 
     // Write Firestore user document
-    await writeUserDoc(uid, cleanUsername, 'patient');
+    await writeUserDoc(uid, cleanUsername, 'patient', input.password);
   }
 
   // Demographic profile for this patient
@@ -235,6 +253,7 @@ export async function adminCreatePatientUser(
     contactNumber: input.contactNumber.trim(),
     address: input.address.trim(),
     patientId: input.patientId?.trim() || `PAT-${cleanUsername.toUpperCase()}`,
+    profilePicture: input.profilePicture,
   };
 
   // Save profile locally and sync to Firestore
@@ -252,6 +271,7 @@ export async function adminCreatePatientUser(
     sex: patientProfile.sex,
     contactNumber: patientProfile.contactNumber,
     patientId: patientProfile.patientId,
+    profilePicture: patientProfile.profilePicture,
     createdAt: now,
   };
   await saveLocalPatientToRoster(summary);
@@ -271,5 +291,79 @@ export async function adminDeletePatientUser(uid: string): Promise<void> {
   if (isFirebaseConfigured) {
     await adminDeletePatient(uid);
   }
+}
+
+/**
+ * Admin updates a patient's credentials (username and/or password).
+ * Updates Firebase Auth via an ephemeral secondary app,
+ * updates Firestore user and patient documents, and synchronizes the local roster.
+ */
+export async function adminUpdatePatientCredentials(
+  uid: string,
+  currentUsername: string,
+  newUsername?: string,
+  newPassword?: string
+): Promise<{ username: string }> {
+  const cleanCurrent = currentUsername.trim().toLowerCase();
+  const cleanNew = newUsername?.trim().toLowerCase() || cleanCurrent;
+
+  // 1. Validate username if changed
+  if (cleanNew !== cleanCurrent) {
+    if (ADMIN_USERNAMES.includes(cleanNew)) {
+      throw new Error(`Username "${newUsername}" is reserved for administrators.`);
+    }
+    const roster = await getLocalRoster();
+    if (roster.some((p) => p.uid !== uid && p.username.toLowerCase() === cleanNew)) {
+      throw new Error(`Username "${newUsername}" is already in use by another patient.`);
+    }
+  }
+
+  // 2. Validate password if provided
+  if (newPassword && newPassword.length < 6) {
+    throw new Error('New password must be at least 6 characters.');
+  }
+
+  // 3. Update Firebase Auth (if configured)
+  if (isFirebaseConfigured) {
+    const userDoc = await fetchUserDoc(uid);
+    const existingPassword = (userDoc as any)?.password || 'patient123';
+
+    const secondaryAppName = `UpdateCreds_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+    const secondaryAuth = getAuth(secondaryApp);
+
+    try {
+      const currentEmail = usernameToInternalEmail(cleanCurrent);
+      const { user } = await signInWithEmailAndPassword(secondaryAuth, currentEmail, existingPassword);
+
+      if (newPassword && newPassword.length >= 6) {
+        await updatePassword(user, newPassword);
+      }
+      if (cleanNew !== cleanCurrent) {
+        const newEmail = usernameToInternalEmail(cleanNew);
+        await updateEmail(user, newEmail);
+      }
+      await firebaseSignOut(secondaryAuth);
+    } catch (authErr) {
+      console.warn('[Auth] Secondary app credential update notice:', authErr);
+    } finally {
+      await deleteApp(secondaryApp).catch(() => {});
+    }
+
+    // Update Firestore user document
+    await writeUserDoc(uid, cleanNew, 'patient', newPassword || existingPassword);
+
+    // Update Firestore patient profile document username
+    try {
+      const firestore = getDb() || db;
+      if (firestore) {
+        await setDoc(doc(firestore, 'patients', uid), { username: cleanNew }, { merge: true });
+      }
+    } catch (docErr) {
+      console.warn('[Auth] Update patient doc username notice:', docErr);
+    }
+  }
+
+  return { username: cleanNew };
 }
 

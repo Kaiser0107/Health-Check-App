@@ -172,6 +172,7 @@ export const FirestoreUserSchema = z.object({
   uid: z.string(),
   username: z.string(),
   email: z.string().optional(),
+  password: z.string().optional(),
   role: UserRoleSchema,
   createdAt: z.string(),
 });
@@ -226,4 +227,29 @@ export const CreatePatientAccountSchema = z.object({
   profilePicture: z.string().optional(),
 });
 export type CreatePatientAccountInput = z.infer<typeof CreatePatientAccountSchema>;
+
+/** Unified Patient & User account edit schema (Admin only) */
+export const UpdatePatientAccountSchema = z.object({
+  username: UsernameSchema.optional(),
+  newPassword: z
+    .string()
+    .min(6, 'New password must be at least 6 characters')
+    .optional()
+    .or(z.literal('')),
+  fullName: z.string().min(1, 'Full name is required').max(100),
+  age: z.coerce
+    .number({ message: 'Please enter a valid age' })
+    .int('Age must be a whole number')
+    .min(1, 'Age must be greater than 0')
+    .max(150, 'Please enter a valid age'),
+  sex: z.enum(['Male', 'Female'], {
+    message: 'Please select Male or Female',
+  }),
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  contactNumber: z.string().min(1, 'Contact number is required'),
+  address: z.string().min(1, 'Address is required'),
+  patientId: z.string().optional(),
+  profilePicture: z.string().optional(),
+});
+export type UpdatePatientAccountInput = z.infer<typeof UpdatePatientAccountSchema>;
 

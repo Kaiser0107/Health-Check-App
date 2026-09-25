@@ -20,6 +20,7 @@ import {
   MyInfo,
   PatientSummary,
   CreatePatientAccountInput,
+  UpdatePatientAccountInput,
 } from '../schemas/health.schema';
 import {
   getLocalMyInfo,
@@ -40,6 +41,7 @@ import {
 import {
   adminCreatePatientUser,
   adminDeletePatientUser,
+  adminUpdatePatientCredentials,
 } from '../lib/auth';
 import { useAuth } from './AuthContext';
 
@@ -66,8 +68,8 @@ interface AppContextValue {
   selectPatient: (uid: string) => Promise<void>;
   /** Create a new unified patient user account (admin only). */
   createPatient: (input: CreatePatientAccountInput) => Promise<string>;
-  /** Update an existing patient's demographic information (admin only). */
-  updatePatient: (uid: string, info: MyInfo) => Promise<void>;
+  /** Update an existing patient's demographic information & credentials (admin only). */
+  updatePatient: (uid: string, input: UpdatePatientAccountInput) => Promise<void>;
   /** Delete a patient and their credentials/data (admin only). */
   deletePatient: (uid: string) => Promise<void>;
   /** Refresh the admin patients list. */
@@ -249,49 +251,87 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [currentPatientId]
   );
 
-  // ─── Admin: update any patient's demographics ─────────────────────────────
+  // ─── Admin: update any patient's demographics & credentials ──────────────
   const updatePatient = useCallback(
-    async (uid: string, info: MyInfo) => {
+    async (uid: string, input: UpdatePatientAccountInput) => {
       try {
         setIsSaving(true);
         setError(null);
-        await saveLocalMyInfo(uid, info);
-        await syncSaveMyInfo(uid, info);
 
-        // Update local roster
         const existing = patients.find((p) => p.uid === uid);
+        const currentUsername = existing?.username || uid;
+
+        // 1. Update credentials (username and/or password) if provided or changed
+        let updatedUsername = currentUsername;
+        if (
+          (input.username && input.username.trim().toLowerCase() !== currentUsername.toLowerCase()) ||
+          (input.newPassword && input.newPassword.trim().length > 0)
+        ) {
+          const credRes = await adminUpdatePatientCredentials(
+            uid,
+            currentUsername,
+            input.username,
+            input.newPassword
+          );
+          updatedUsername = credRes.username;
+        }
+
+        // 2. Prepare clean demographic profile
+        const info: MyInfo = {
+          fullName: input.fullName.trim(),
+          age: input.age,
+          sex: input.sex,
+          dateOfBirth: input.dateOfBirth,
+          contactNumber: input.contactNumber.trim(),
+          address: input.address.trim(),
+          patientId: input.patientId?.trim() || existing?.patientId,
+          profilePicture: input.profilePicture !== undefined ? input.profilePicture : existing?.profilePicture,
+        };
+
+        // 3. Save local profile
+        await saveLocalMyInfo(uid, info);
+
+        // 4. Update local roster
         await saveLocalPatientToRoster({
           uid,
-          username: existing?.username || uid,
+          username: updatedUsername,
           fullName: info.fullName,
           age: info.age,
           sex: info.sex,
           contactNumber: info.contactNumber,
-          patientId: info.patientId || existing?.patientId,
-          profilePicture: info.profilePicture || existing?.profilePicture,
+          patientId: info.patientId,
+          profilePicture: info.profilePicture,
           createdAt: existing?.createdAt || new Date().toISOString(),
         });
 
-        // Update in-memory patients list
+        // 5. Update in-memory patients list immediately
         setPatients((prev) =>
           prev.map((p) =>
             p.uid === uid
               ? {
                   ...p,
+                  username: updatedUsername,
                   fullName: info.fullName,
                   age: info.age,
                   sex: info.sex,
                   contactNumber: info.contactNumber,
-                  patientId: info.patientId || p.patientId,
-                  profilePicture: info.profilePicture ?? p.profilePicture,
+                  patientId: info.patientId,
+                  profilePicture: info.profilePicture,
                 }
               : p
           )
         );
 
-        // If this patient is currently selected, update active myInfo
+        // 6. If this patient is currently selected, update active myInfo
         if (currentPatientId === uid) {
           setMyInfo(info);
+        }
+
+        // 7. Background cloud sync (safe, non-blocking)
+        try {
+          await syncSaveMyInfo(uid, { ...info, username: updatedUsername });
+        } catch (cloudErr) {
+          console.warn('[AppContext] Cloud sync notice:', cloudErr);
         }
       } catch (err: any) {
         console.error('[AppContext] Error updating patient:', err);

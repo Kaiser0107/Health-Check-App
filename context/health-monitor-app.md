@@ -58,6 +58,9 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | **Two Roles Only** | **Admin vs User/Patient** | Simplified 2-tier role hierarchy; User and Patient are 1:1 identical |
 | **Admin Role** | Hardcoded list in `constants/adminUsers.ts` | High security, tamper-proof, non-elevatable |
 | **Patient Provisioning** | Ephemeral Secondary Firebase App (`lib/auth.ts`) | Admin provisions patient credentials without being logged out |
+| **Admin Credential Updates** | Ephemeral Secondary Firebase App (`lib/auth.ts`) | Admin updates patient username/password without session disruption |
+| **Firestore Hardening** | Safe `getDb()` getter + `cleanFirestoreData()` | Strips `undefined` values and guards against uninitialized `Firestore` |
+| **Reactive Roster Updates** | `extraData={patients}` + local-first roster merge | Guarantees instant card, username, and profile photo reactivity |
 | **Patient Data Scope** | `patientId` (Firebase UID) as storage key namespace | Prevents cross-patient data leakage on shared device |
 | **Date Selection** | `DatePickerField` modal with year jump | Replaces manual typing; prevents date formatting issues & auto-calculates age |
 | **Country Phone Formatting** | `CountryPhoneInput` with Philippines 🇵🇭 default | Country selector dialog formatting calling code + national digits (+63) |

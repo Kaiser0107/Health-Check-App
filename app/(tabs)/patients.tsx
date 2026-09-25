@@ -22,7 +22,12 @@ import {
   PatientSummary,
   CreatePatientAccountSchema,
   CreatePatientAccountInput,
+  MyInfoSchema,
+  MyInfo,
 } from '../../schemas/health.schema';
+import { getLocalMyInfo } from '../../lib/storage';
+import { DatePickerField } from '../../components/ui/DatePickerField';
+import { CountryPhoneInput } from '../../components/ui/CountryPhoneInput';
 
 export default function PatientsScreen() {
   const router = useRouter();
@@ -31,6 +36,7 @@ export default function PatientsScreen() {
     patients,
     selectPatient,
     createPatient,
+    updatePatient,
     deletePatient,
     refreshPatients,
     currentPatientId,
@@ -38,26 +44,39 @@ export default function PatientsScreen() {
     isSaving,
   } = useApp();
 
+  // ─── Add Patient Modal State ──────────────────────────────────────────────
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [sex, setSex] = useState<'Male' | 'Female'>('Male');
-  const [dob, setDob] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
+  const [dob, setDob] = useState('2000-01-01');
+  const [contactNumber, setContactNumber] = useState('+63');
   const [address, setAddress] = useState('');
   const [patientIdInput, setPatientIdInput] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
-  const resetForm = () => {
+  // ─── Edit Patient Modal State ─────────────────────────────────────────────
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<PatientSummary | null>(null);
+  const [editFullName, setEditFullName] = useState('');
+  const [editAge, setEditAge] = useState('');
+  const [editSex, setEditSex] = useState<'Male' | 'Female'>('Male');
+  const [editDob, setEditDob] = useState('2000-01-01');
+  const [editContactNumber, setEditContactNumber] = useState('+63');
+  const [editAddress, setEditAddress] = useState('');
+  const [editPatientIdInput, setEditPatientIdInput] = useState('');
+  const [editFormError, setEditFormError] = useState<string | null>(null);
+
+  const resetAddForm = () => {
     setUsername('');
     setPassword('');
     setFullName('');
-    setAge('');
+    setAge('26');
     setSex('Male');
-    setDob('');
-    setContactNumber('');
+    setDob('2000-01-01');
+    setContactNumber('+63');
     setAddress('');
     setPatientIdInput('');
     setFormError(null);
@@ -121,8 +140,24 @@ export default function PatientsScreen() {
     [deletePatient]
   );
 
+  const handleOpenEditModal = async (patient: PatientSummary) => {
+    setEditingPatient(patient);
+    setEditFormError(null);
+
+    // Load full profile details from storage
+    const local = await getLocalMyInfo(patient.uid);
+    setEditFullName(local?.fullName || patient.fullName || '');
+    setEditAge(local?.age ? String(local.age) : patient.age ? String(patient.age) : '25');
+    setEditSex(local?.sex || patient.sex || 'Male');
+    setEditDob(local?.dateOfBirth || '2000-01-01');
+    setEditContactNumber(local?.contactNumber || patient.contactNumber || '+63');
+    setEditAddress(local?.address || '');
+    setEditPatientIdInput(local?.patientId || patient.patientId || '');
+
+    setEditModalVisible(true);
+  };
+
   const handleCreatePatient = async () => {
-    // 1. Validate fields with Zod schema
     const rawData = {
       username: username.trim(),
       password: password.trim(),
@@ -147,7 +182,7 @@ export default function PatientsScreen() {
       const input: CreatePatientAccountInput = parseResult.data;
       const newUid = await createPatient(input);
       setModalVisible(false);
-      resetForm();
+      resetAddForm();
 
       if (Platform.OS === 'web') {
         if (
@@ -176,6 +211,43 @@ export default function PatientsScreen() {
       }
     } catch (err: any) {
       setFormError(err?.message || 'Failed to create patient account.');
+    }
+  };
+
+  const handleSaveEditPatient = async () => {
+    if (!editingPatient) return;
+
+    const rawData = {
+      fullName: editFullName.trim(),
+      age: editAge.trim() ? parseInt(editAge.trim(), 10) : undefined,
+      sex: editSex,
+      dateOfBirth: editDob.trim() || '2000-01-01',
+      contactNumber: editContactNumber.trim(),
+      address: editAddress.trim(),
+      patientId: editPatientIdInput.trim() || undefined,
+    };
+
+    const parseResult = MyInfoSchema.safeParse(rawData);
+    if (!parseResult.success) {
+      const firstIssue = parseResult.error.issues[0];
+      setEditFormError(firstIssue ? `${firstIssue.path.join('.')}: ${firstIssue.message}` : 'Validation error.');
+      return;
+    }
+
+    setEditFormError(null);
+    try {
+      const input: MyInfo = parseResult.data;
+      await updatePatient(editingPatient.uid, input);
+      setEditModalVisible(false);
+      setEditingPatient(null);
+
+      if (Platform.OS === 'web') {
+        window.alert(`Patient profile for @${editingPatient.username} updated successfully!`);
+      } else {
+        Alert.alert('Profile Updated', `Patient profile for @${editingPatient.username} updated successfully!`);
+      }
+    } catch (err: any) {
+      setEditFormError(err?.message || 'Failed to update patient profile.');
     }
   };
 
@@ -225,13 +297,25 @@ export default function PatientsScreen() {
             ) : null}
           </View>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDeletePatient(item)}
-          accessibilityLabel={`Delete patient ${item.fullName}`}
-        >
-          <Ionicons name="trash-outline" size={20} color="#dc2626" />
-        </TouchableOpacity>
+
+        {/* Card Action Buttons: Edit & Delete */}
+        <View style={styles.cardActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleOpenEditModal(item)}
+            accessibilityLabel={`Edit patient ${item.fullName}`}
+          >
+            <Ionicons name="create-outline" size={20} color="#2563eb" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleDeletePatient(item)}
+            accessibilityLabel={`Delete patient ${item.fullName}`}
+          >
+            <Ionicons name="trash-outline" size={20} color="#dc2626" />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -249,7 +333,7 @@ export default function PatientsScreen() {
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
-            resetForm();
+            resetAddForm();
             setModalVisible(true);
           }}
           accessibilityLabel="Add new patient"
@@ -274,7 +358,7 @@ export default function PatientsScreen() {
           <TouchableOpacity
             style={styles.emptyAddButton}
             onPress={() => {
-              resetForm();
+              resetAddForm();
               setModalVisible(true);
             }}
             accessibilityLabel="Add patient now"
@@ -299,7 +383,7 @@ export default function PatientsScreen() {
         />
       )}
 
-      {/* ─── ADD PATIENT ACCOUNT MODAL ─────────────────────────────────────── */}
+      {/* ─── 1. ADD PATIENT ACCOUNT MODAL ────────────────────────────────────── */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -310,7 +394,7 @@ export default function PatientsScreen() {
               <View>
                 <Text style={styles.modalTitle}>Provision Patient Account</Text>
                 <Text style={styles.modalSubtitle}>
-                  Creates credentials & medical demographic profile
+                  Creates login credentials & medical demographic profile
                 </Text>
               </View>
               <TouchableOpacity
@@ -368,9 +452,22 @@ export default function PatientsScreen() {
                   placeholderTextColor="#94a3b8"
                 />
 
+                {/* Date of Birth with Calendar Selector */}
+                <DatePickerField
+                  label="Date of Birth *"
+                  value={dob}
+                  onChange={(selectedDate, calculatedAge) => {
+                    setDob(selectedDate);
+                    if (calculatedAge !== undefined) {
+                      setAge(String(calculatedAge));
+                    }
+                  }}
+                  helperText="Interactive calendar selector auto-calculates patient age"
+                />
+
                 <View style={styles.twoCol}>
                   <View style={{ flex: 1, marginRight: 8 }}>
-                    <Text style={styles.fieldLabel}>Age *</Text>
+                    <Text style={styles.fieldLabel}>Age * (Auto-calculated)</Text>
                     <TextInput
                       style={styles.textInput}
                       value={age}
@@ -404,23 +501,12 @@ export default function PatientsScreen() {
                   </View>
                 </View>
 
-                <Text style={styles.fieldLabel}>Date of Birth * (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={dob}
-                  onChangeText={setDob}
-                  placeholder="e.g. 1980-05-15"
-                  placeholderTextColor="#94a3b8"
-                />
-
-                <Text style={styles.fieldLabel}>Contact Number *</Text>
-                <TextInput
-                  style={styles.textInput}
+                {/* Country Selector Phone Input (Defaults to PH +63) */}
+                <CountryPhoneInput
+                  label="Contact Number *"
                   value={contactNumber}
-                  onChangeText={setContactNumber}
-                  keyboardType="phone-pad"
-                  placeholder="e.g. 09123456789"
-                  placeholderTextColor="#94a3b8"
+                  onChange={setContactNumber}
+                  helperText="Select country code to automatically format mobile contact"
                 />
 
                 <Text style={styles.fieldLabel}>Address *</Text>
@@ -452,6 +538,149 @@ export default function PatientsScreen() {
                   <ActivityIndicator color="#ffffff" />
                 ) : (
                   <Text style={styles.saveButtonText}>Provision Patient Account</Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ─── 2. EDIT PATIENT INFORMATION MODAL ──────────────────────────────── */}
+      <Modal visible={editModalVisible} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Edit Patient Information</Text>
+                <Text style={styles.modalSubtitle}>
+                  Updating demographics for @{editingPatient?.username || 'patient'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setEditModalVisible(false);
+                  setEditingPatient(null);
+                }}
+                accessibilityLabel="Close edit modal"
+              >
+                <Ionicons name="close-circle" size={24} color="#94a3b8" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.modalForm} keyboardShouldPersistTaps="handled">
+              {editFormError && (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorBoxText}>{editFormError}</Text>
+                </View>
+              )}
+
+              <Text style={styles.fieldLabel}>Full Name *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={editFullName}
+                onChangeText={setEditFullName}
+                placeholder="e.g. John Doe"
+                placeholderTextColor="#94a3b8"
+              />
+
+              {/* Date of Birth with Calendar Selector */}
+              <DatePickerField
+                label="Date of Birth *"
+                value={editDob}
+                onChange={(selectedDate, calculatedAge) => {
+                  setEditDob(selectedDate);
+                  if (calculatedAge !== undefined) {
+                    setEditAge(String(calculatedAge));
+                  }
+                }}
+                helperText="Calendar selector auto-recalculates patient age"
+              />
+
+              <View style={styles.twoCol}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <Text style={styles.fieldLabel}>Age * (Auto-calculated)</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editAge}
+                    onChangeText={setEditAge}
+                    keyboardType="number-pad"
+                    placeholder="e.g. 45"
+                    placeholderTextColor="#94a3b8"
+                  />
+                </View>
+
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={styles.fieldLabel}>Sex *</Text>
+                  <View style={styles.sexRow}>
+                    <TouchableOpacity
+                      style={[styles.sexChip, editSex === 'Male' && styles.sexChipActive]}
+                      onPress={() => setEditSex('Male')}
+                    >
+                      <Text
+                        style={[
+                          styles.sexChipText,
+                          editSex === 'Male' && styles.sexChipTextActive,
+                        ]}
+                      >
+                        Male
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.sexChip, editSex === 'Female' && styles.sexChipActive]}
+                      onPress={() => setEditSex('Female')}
+                    >
+                      <Text
+                        style={[
+                          styles.sexChipText,
+                          editSex === 'Female' && styles.sexChipTextActive,
+                        ]}
+                      >
+                        Female
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              {/* Country Selector Phone Input (Defaults to PH +63) */}
+              <CountryPhoneInput
+                label="Contact Number *"
+                value={editContactNumber}
+                onChange={setEditContactNumber}
+                helperText="Country dial code formatted automatically"
+              />
+
+              <Text style={styles.fieldLabel}>Address *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={editAddress}
+                onChangeText={setEditAddress}
+                placeholder="e.g. 123 Health St, Manila"
+                placeholderTextColor="#94a3b8"
+              />
+
+              <Text style={styles.fieldLabel}>Hospital / Patient ID (Optional)</Text>
+              <TextInput
+                style={styles.textInput}
+                value={editPatientIdInput}
+                onChangeText={setEditPatientIdInput}
+                placeholder="e.g. PAT-2026-001"
+                placeholderTextColor="#94a3b8"
+              />
+
+              <TouchableOpacity
+                style={[styles.saveButton, isSaving && { opacity: 0.6 }]}
+                onPress={handleSaveEditPatient}
+                disabled={isSaving}
+                accessibilityLabel="Save patient changes"
+              >
+                {isSaving ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save Changes</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -532,7 +761,17 @@ const styles = StyleSheet.create({
   patientMetaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
   patientMetaText: { fontSize: 12, color: '#64748b' },
   patientId: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
-  deleteButton: { padding: 8, marginLeft: 8 },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: 8,
+  },
+  actionButton: {
+    padding: 7,
+    borderRadius: 8,
+    backgroundColor: '#f8fafc',
+  },
   center: {
     flex: 1,
     justifyContent: 'center',

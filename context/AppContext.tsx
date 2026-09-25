@@ -28,6 +28,7 @@ import {
   addLocalRecord,
   deleteLocalRecord,
   clearPatientData,
+  saveLocalPatientToRoster,
 } from '../lib/storage';
 import {
   syncSaveMyInfo,
@@ -65,6 +66,8 @@ interface AppContextValue {
   selectPatient: (uid: string) => Promise<void>;
   /** Create a new unified patient user account (admin only). */
   createPatient: (input: CreatePatientAccountInput) => Promise<string>;
+  /** Update an existing patient's demographic information (admin only). */
+  updatePatient: (uid: string, info: MyInfo) => Promise<void>;
   /** Delete a patient and their credentials/data (admin only). */
   deletePatient: (uid: string) => Promise<void>;
   /** Refresh the admin patients list. */
@@ -245,6 +248,59 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [currentPatientId]
   );
 
+  // ─── Admin: update any patient's demographics ─────────────────────────────
+  const updatePatient = useCallback(
+    async (uid: string, info: MyInfo) => {
+      try {
+        setIsSaving(true);
+        setError(null);
+        await saveLocalMyInfo(uid, info);
+        await syncSaveMyInfo(uid, info);
+
+        // Update local roster
+        const existing = patients.find((p) => p.uid === uid);
+        await saveLocalPatientToRoster({
+          uid,
+          username: existing?.username || uid,
+          fullName: info.fullName,
+          age: info.age,
+          sex: info.sex,
+          contactNumber: info.contactNumber,
+          patientId: info.patientId || existing?.patientId,
+          createdAt: existing?.createdAt || new Date().toISOString(),
+        });
+
+        // Update in-memory patients list
+        setPatients((prev) =>
+          prev.map((p) =>
+            p.uid === uid
+              ? {
+                  ...p,
+                  fullName: info.fullName,
+                  age: info.age,
+                  sex: info.sex,
+                  contactNumber: info.contactNumber,
+                  patientId: info.patientId || p.patientId,
+                }
+              : p
+          )
+        );
+
+        // If this patient is currently selected, update active myInfo
+        if (currentPatientId === uid) {
+          setMyInfo(info);
+        }
+      } catch (err: any) {
+        console.error('[AppContext] Error updating patient:', err);
+        setError(err?.message || 'Failed to update patient information');
+        throw err;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [patients, currentPatientId]
+  );
+
   // ─── Add new vital record ─────────────────────────────────────────────────
   const addNewRecord = useCallback(
     async (recordData: Omit<HealthRecord, 'id'>): Promise<HealthRecord> => {
@@ -325,12 +381,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       patients,
       selectPatient,
       createPatient,
+      updatePatient,
       deletePatient,
       refreshPatients,
     }),
     [
       currentPatientId, myInfo, records, latestRecord, isLoading, isSaving, error,
-      updateMyInfo, addNewRecord, removeRecord, clearAllData, loadPatientData,
+      updateMyInfo, updatePatient, addNewRecord, removeRecord, clearAllData, loadPatientData,
       patients, selectPatient, createPatient, deletePatient, refreshPatients,
     ]
   );

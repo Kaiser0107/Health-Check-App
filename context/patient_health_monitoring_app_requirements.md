@@ -76,13 +76,13 @@ Provide editable fields for:
 * **Profile Picture** (Camera capture or photo library picker — displayed as a circular avatar on the patient profile)
 * **Patient ID** (Identification code / hospital or school record number)
 * **Full Name**
-* **Age** (Auto-calculated from Date of Birth or manually editable)
+* **Age** (Auto-calculated reactively from Date of Birth or manually editable)
 * **Sex / Gender** (Male or Female)
-* **Date of Birth** (Interactive modal calendar selector)
-* **Contact Number**
+* **Date of Birth** (Interactive modal calendar selector with Month/Day navigation and Year jump dialog to prevent date format errors)
+* **Contact Number** (Country selector modal with flag & calling codes, defaulting to Philippines 🇵🇭 `+63`, automatically formatting local mobile digits)
 * **Address**
 
-Include an **Edit Patient Information** function allowing the user (patient, caregiver, teacher, or nurse) to modify previously recorded patient details, including replacing the profile picture.
+Include an **Edit Patient Information** function allowing the Administrator to modify previously recorded patient details after account creation directly from the Patients roster, as well as via the patient profile.
 
 ---
 

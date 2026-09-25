@@ -59,6 +59,9 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | **Patient Provisioning** | Ephemeral Secondary Firebase App (`lib/auth.ts`) | Admin provisions patient credentials without being logged out |
 | **Patient Data Scope** | `patientId` (Firebase UID) as storage key namespace | Prevents cross-patient data leakage on shared device |
 | **Web Reload & Sign Out** | Route to Drop Logo (`/splash`) before Login | Ensures reload and sign-out always replay drop logo animation cleanly |
+| **Date Selection** | `DatePickerField` modal with year jump | Replaces manual typing; prevents date formatting issues & auto-calculates age |
+| **Country Phone Formatting** | `CountryPhoneInput` with Philippines 🇵🇭 default | Country selector dialog formatting calling code + national digits (+63) |
+| **Admin Patient Edit** | `updatePatient` modal in Patients tab | Allows Admins to update patient demographics post-creation |
 
 ---
 

@@ -17,6 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { MyInfo, MyInfoInput, MyInfoSchema } from '../../schemas/health.schema';
 import { InputField } from '../ui/InputField';
+import { DatePickerField } from '../ui/DatePickerField';
+import { CountryPhoneInput } from '../ui/CountryPhoneInput';
 
 interface MyInfoFormProps {
   initialData?: MyInfo | null;
@@ -265,64 +267,24 @@ export const MyInfoForm: React.FC<MyInfoFormProps> = ({
       />
 
       {/* ── Date of Birth ── */}
-      <View style={styles.fieldContainer}>
-        <Text style={styles.fieldLabel}>Date of Birth *</Text>
-        <TouchableOpacity
-          style={[styles.datePickerButton, errors.dateOfBirth ? styles.inputError : null]}
-          onPress={() => setShowDatePicker(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Select date of birth"
-        >
-          <View style={styles.datePickerRow}>
-            <Ionicons name="calendar-outline" size={20} color="#2563eb" style={{ marginRight: 10 }} />
-            <Text
-              style={[
-                styles.datePickerText,
-                !currentDateOfBirth ? styles.datePickerPlaceholder : null,
-              ]}
-            >
-              {currentDateOfBirth ? currentDateOfBirth : 'Tap to select date from calendar'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-        {errors.dateOfBirth?.message ? (
-          <Text style={styles.errorText}>{errors.dateOfBirth.message}</Text>
-        ) : null}
-
-        {showDatePicker && Platform.OS === 'android' && (
-          <DateTimePicker
-            value={currentDateOfBirth ? new Date(currentDateOfBirth) : tempDate}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            minimumDate={new Date(1900, 0, 1)}
-            onChange={onDateChange}
+      <Controller
+        control={control}
+        name="dateOfBirth"
+        render={({ field: { onChange, value } }) => (
+          <DatePickerField
+            label="Date of Birth *"
+            value={value || ''}
+            onChange={(selectedDate, calculatedAge) => {
+              onChange(selectedDate);
+              if (calculatedAge !== undefined) {
+                setValue('age', String(calculatedAge), { shouldValidate: true });
+              }
+            }}
+            error={errors.dateOfBirth?.message}
+            helperText="Interactive calendar selector auto-calculates patient age"
           />
         )}
-
-        {showDatePicker && Platform.OS === 'ios' && (
-          <Modal transparent animationType="fade" visible={showDatePicker}>
-            <View style={styles.iosModalOverlay}>
-              <View style={styles.iosModalContent}>
-                <View style={styles.iosModalHeader}>
-                  <Text style={styles.iosModalTitle}>Select Date of Birth</Text>
-                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                    <Text style={styles.iosModalDone}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <DateTimePicker
-                  value={currentDateOfBirth ? new Date(currentDateOfBirth) : tempDate}
-                  mode="date"
-                  display="spinner"
-                  maximumDate={new Date()}
-                  minimumDate={new Date(1900, 0, 1)}
-                  onChange={onDateChange}
-                />
-              </View>
-            </View>
-          </Modal>
-        )}
-      </View>
+      />
 
       {/* ── Age ── */}
       <Controller
@@ -382,16 +344,13 @@ export const MyInfoForm: React.FC<MyInfoFormProps> = ({
       <Controller
         control={control}
         name="contactNumber"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <InputField
+        render={({ field: { onChange, value } }) => (
+          <CountryPhoneInput
             label="Contact Number *"
-            placeholder="e.g. +1 555 123 4567"
-            value={value || ''}
-            onChangeText={onChange}
-            onBlur={onBlur}
-            keyboardType="phone-pad"
+            value={value || '+63'}
+            onChange={onChange}
             error={errors.contactNumber?.message}
-            accessibilityLabel="Contact number input"
+            helperText="Select country code to automatically format mobile contact"
           />
         )}
       />

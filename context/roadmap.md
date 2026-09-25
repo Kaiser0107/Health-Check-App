@@ -39,6 +39,7 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | **10** | **Login Screen** | **Username & Password Auth — Sign In / Create Account (No email needed)** | ✅ Done |
 | **11** | **Role System** | **AuthContext + Hardcoded Admin Usernames (`constants/adminUsers.ts`) + Role Routing** | ✅ Done |
 | **12** | **Unified User-Patient Flow** | **2 Roles Only: Unified account/profile, Admin-only provisioning, Patient dashboard-only** | ✅ Done |
+| **13** | **QoL Form Controls** | **Calendar date picker, Country phone selector (PH +63 default), Admin patient edit** | ✅ Done |
 | 5 | Dashboard Screen | Role-aware: Patient (own vitals) vs Admin (selected patient overview) | ✅ Done |
 | 7 | Settings Screen | Account profile, Role badge, Firebase Sign Out, Clear data | ✅ Done |
 | 6 | History Screen | Role-aware: List past records per patient with timestamps | ⬜ Next Up |
@@ -588,3 +589,31 @@ service cloud.firestore {
 - [x] Patient's personal demographics and clinical vitals display on Dashboard
 - [x] Admin can delete patient account and all their data
 - [x] Sign out and web reload return to Drop Logo → Login screen cleanly
+
+---
+
+## Milestone 13 — Quality of Life Form Enhancements
+
+> **Goal:** Eliminate manual date typing format errors, introduce automatic country phone code selection, and empower Admins to edit patient profiles after creation.
+
+### Work Completed
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 13.1 | Create reusable `DatePickerField` component with interactive calendar selector, Month/Day grid, and Year jump picker | `components/ui/DatePickerField.tsx` | ✅ |
+| 13.2 | Auto-calculate age reactively from selected birth date in `DatePickerField` | `components/ui/DatePickerField.tsx` | ✅ |
+| 13.3 | Create reusable `CountryPhoneInput` component with country flag selector modal, defaulting to Philippines 🇵🇭 `+63` | `components/ui/CountryPhoneInput.tsx` | ✅ |
+| 13.4 | Update `context/AppContext.tsx` with `updatePatient(uid, info)` method to update local storage, local roster, Firestore, and active session | `context/AppContext.tsx` | ✅ |
+| 13.5 | Integrate `DatePickerField` and `CountryPhoneInput` into Add Patient Modal in `PatientsScreen` | `app/(tabs)/patients.tsx` | ✅ |
+| 13.6 | Add Edit Patient action button (`pencil-outline`) on each patient roster card in `PatientsScreen` | `app/(tabs)/patients.tsx` | ✅ |
+| 13.7 | Build complete Edit Patient Modal with pre-populated demographics and form validation in `PatientsScreen` | `app/(tabs)/patients.tsx` | ✅ |
+| 13.8 | Integrate `DatePickerField` and `CountryPhoneInput` into `MyInfoForm` for cross-app consistency | `components/forms/MyInfoForm.tsx` | ✅ |
+| 13.9 | Update context documentation files (`requirements.md`, `health-monitor-app.md`, `roadmap.md`) | `context/*` | ✅ |
+
+### Verify Before Closing Milestone
+- [x] `npx tsc --noEmit` — 0 errors ✅
+- [x] Tapping Date of Birth opens calendar selector without manual text entry
+- [x] Choosing date of birth auto-calculates patient age
+- [x] Contact number field defaults to Philippines 🇵🇭 `+63` with country code picker
+- [x] Admin can click Edit button on any patient in the roster to modify demographics
+- [x] Profile updates persist in local storage, roster, and Firestore seamlessly

@@ -62,6 +62,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | **Date Selection** | `DatePickerField` modal with year jump | Replaces manual typing; prevents date formatting issues & auto-calculates age |
 | **Country Phone Formatting** | `CountryPhoneInput` with Philippines 🇵🇭 default | Country selector dialog formatting calling code + national digits (+63) |
 | **Admin Patient Edit** | `updatePatient` modal in Patients tab | Allows Admins to update patient demographics post-creation |
+| **Admin Avatar Management** | `AvatarPicker` (Camera & Gallery) in Add/Edit Modals | Admin can upload, change, or remove patient profile photos |
 
 ---
 

@@ -210,6 +210,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           sex: input.sex,
           contactNumber: input.contactNumber.trim(),
           patientId: input.patientId?.trim() || `PAT-${input.username.trim().toUpperCase()}`,
+          profilePicture: input.profilePicture,
           createdAt: new Date().toISOString(),
         };
 
@@ -267,6 +268,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           sex: info.sex,
           contactNumber: info.contactNumber,
           patientId: info.patientId || existing?.patientId,
+          profilePicture: info.profilePicture || existing?.profilePicture,
           createdAt: existing?.createdAt || new Date().toISOString(),
         });
 
@@ -281,6 +283,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   sex: info.sex,
                   contactNumber: info.contactNumber,
                   patientId: info.patientId || p.patientId,
+                  profilePicture: info.profilePicture ?? p.profilePicture,
                 }
               : p
           )

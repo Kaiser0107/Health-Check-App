@@ -608,7 +608,8 @@ service cloud.firestore {
 | 13.6 | Add Edit Patient action button (`pencil-outline`) on each patient roster card in `PatientsScreen` | `app/(tabs)/patients.tsx` | ✅ |
 | 13.7 | Build complete Edit Patient Modal with pre-populated demographics and form validation in `PatientsScreen` | `app/(tabs)/patients.tsx` | ✅ |
 | 13.8 | Integrate `DatePickerField` and `CountryPhoneInput` into `MyInfoForm` for cross-app consistency | `components/forms/MyInfoForm.tsx` | ✅ |
-| 13.9 | Update context documentation files (`requirements.md`, `health-monitor-app.md`, `roadmap.md`) | `context/*` | ✅ |
+| 13.9 | Create `AvatarPicker` component and integrate profile picture management into Admin Add & Edit Modals | `components/ui/AvatarPicker.tsx`, `app/(tabs)/patients.tsx`, `app/(tabs)/index.tsx` | ✅ |
+| 13.10 | Update context documentation files (`requirements.md`, `health-monitor-app.md`, `roadmap.md`) | `context/*` | ✅ |
 
 ### Verify Before Closing Milestone
 - [x] `npx tsc --noEmit` — 0 errors ✅
@@ -616,4 +617,6 @@ service cloud.firestore {
 - [x] Choosing date of birth auto-calculates patient age
 - [x] Contact number field defaults to Philippines 🇵🇭 `+63` with country code picker
 - [x] Admin can click Edit button on any patient in the roster to modify demographics
+- [x] Admin can upload, take a photo with camera, change, or remove patient profile picture
+- [x] Profile picture appears on patient roster card and health dashboard avatar
 - [x] Profile updates persist in local storage, roster, and Firestore seamlessly

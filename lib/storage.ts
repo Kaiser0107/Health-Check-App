@@ -120,6 +120,7 @@ export interface RosterPatient {
   sex?: 'Male' | 'Female';
   contactNumber?: string;
   patientId?: string;
+  profilePicture?: string;
   createdAt: string;
 }
 

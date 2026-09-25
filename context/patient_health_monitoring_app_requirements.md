@@ -73,7 +73,7 @@ The interface is clean, responsive, easy to understand, and optimized for mobile
 
 Provide editable fields for:
 
-* **Profile Picture** (Camera capture or photo library picker — displayed as a circular avatar on the patient profile)
+* **Profile Picture** (Camera capture or photo library picker — editable by Administrator when creating or editing patient accounts; displayed as a circular avatar on the patient profile card, roster list, and dashboard)
 * **Patient ID** (Identification code / hospital or school record number)
 * **Full Name**
 * **Age** (Auto-calculated reactively from Date of Birth or manually editable)
@@ -82,7 +82,7 @@ Provide editable fields for:
 * **Contact Number** (Country selector modal with flag & calling codes, defaulting to Philippines 🇵🇭 `+63`, automatically formatting local mobile digits)
 * **Address**
 
-Include an **Edit Patient Information** function allowing the Administrator to modify previously recorded patient details after account creation directly from the Patients roster, as well as via the patient profile.
+Include an **Edit Patient Information** function allowing the Administrator to modify previously recorded patient details—including taking a new photo, choosing from library, or removing the profile picture—after account creation directly from the Patients roster.
 
 ---
 

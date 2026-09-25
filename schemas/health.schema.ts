@@ -162,6 +162,7 @@ export const PatientSummarySchema = z.object({
   sex: z.enum(['Male', 'Female']).optional(),
   contactNumber: z.string().optional(),
   patientId: z.string().optional(),
+  profilePicture: z.string().optional(),
   createdAt: z.string(),    // ISO timestamp
 });
 export type PatientSummary = z.infer<typeof PatientSummarySchema>;
@@ -222,6 +223,7 @@ export const CreatePatientAccountSchema = z.object({
   contactNumber: z.string().min(1, 'Contact number is required'),
   address: z.string().min(1, 'Address is required'),
   patientId: z.string().optional(),
+  profilePicture: z.string().optional(),
 });
 export type CreatePatientAccountInput = z.infer<typeof CreatePatientAccountSchema>;
 

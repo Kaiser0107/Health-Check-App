@@ -85,6 +85,7 @@ export async function adminGetAllPatients(): Promise<PatientSummary[]> {
         sex: data.sex,
         contactNumber: data.contactNumber,
         patientId: data.patientId,
+        profilePicture: data.profilePicture,
         createdAt: data.createdAt ?? new Date().toISOString(),
       };
     }) as PatientSummary[];

@@ -13,6 +13,7 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +29,7 @@ import {
 import { getLocalMyInfo } from '../../lib/storage';
 import { DatePickerField } from '../../components/ui/DatePickerField';
 import { CountryPhoneInput } from '../../components/ui/CountryPhoneInput';
+import { AvatarPicker } from '../../components/ui/AvatarPicker';
 
 export default function PatientsScreen() {
   const router = useRouter();
@@ -55,6 +57,7 @@ export default function PatientsScreen() {
   const [contactNumber, setContactNumber] = useState('+63');
   const [address, setAddress] = useState('');
   const [patientIdInput, setPatientIdInput] = useState('');
+  const [profilePicture, setProfilePicture] = useState<string | undefined>(undefined);
   const [formError, setFormError] = useState<string | null>(null);
 
   // ─── Edit Patient Modal State ─────────────────────────────────────────────
@@ -67,6 +70,7 @@ export default function PatientsScreen() {
   const [editContactNumber, setEditContactNumber] = useState('+63');
   const [editAddress, setEditAddress] = useState('');
   const [editPatientIdInput, setEditPatientIdInput] = useState('');
+  const [editProfilePicture, setEditProfilePicture] = useState<string | undefined>(undefined);
   const [editFormError, setEditFormError] = useState<string | null>(null);
 
   const resetAddForm = () => {
@@ -79,6 +83,7 @@ export default function PatientsScreen() {
     setContactNumber('+63');
     setAddress('');
     setPatientIdInput('');
+    setProfilePicture(undefined);
     setFormError(null);
   };
 
@@ -153,6 +158,7 @@ export default function PatientsScreen() {
     setEditContactNumber(local?.contactNumber || patient.contactNumber || '+63');
     setEditAddress(local?.address || '');
     setEditPatientIdInput(local?.patientId || patient.patientId || '');
+    setEditProfilePicture(local?.profilePicture || patient.profilePicture || undefined);
 
     setEditModalVisible(true);
   };
@@ -168,6 +174,7 @@ export default function PatientsScreen() {
       contactNumber: contactNumber.trim(),
       address: address.trim(),
       patientId: patientIdInput.trim() || undefined,
+      profilePicture,
     };
 
     const parseResult = CreatePatientAccountSchema.safeParse(rawData);
@@ -225,6 +232,7 @@ export default function PatientsScreen() {
       contactNumber: editContactNumber.trim(),
       address: editAddress.trim(),
       patientId: editPatientIdInput.trim() || undefined,
+      profilePicture: editProfilePicture,
     };
 
     const parseResult = MyInfoSchema.safeParse(rawData);
@@ -271,9 +279,13 @@ export default function PatientsScreen() {
           accessibilityLabel={`Select patient ${item.fullName}`}
         >
           <View style={[styles.avatar, isSelected && styles.selectedAvatar]}>
-            <Text style={[styles.avatarText, isSelected && styles.selectedAvatarText]}>
-              {item.fullName.charAt(0).toUpperCase()}
-            </Text>
+            {item.profilePicture ? (
+              <Image source={{ uri: item.profilePicture }} style={styles.cardAvatarImage} />
+            ) : (
+              <Text style={[styles.avatarText, isSelected && styles.selectedAvatarText]}>
+                {item.fullName.charAt(0).toUpperCase()}
+              </Text>
+            )}
           </View>
           <View style={styles.patientDetails}>
             <View style={styles.nameRow}>
@@ -443,6 +455,14 @@ export default function PatientsScreen() {
               <View style={styles.formSection}>
                 <Text style={styles.formSectionTitle}>2. Demographic Profile</Text>
 
+                {/* Profile Picture */}
+                <AvatarPicker
+                  uri={profilePicture}
+                  name={fullName || username || 'Patient'}
+                  onChange={setProfilePicture}
+                  label="Patient Profile Picture (Optional)"
+                />
+
                 <Text style={styles.fieldLabel}>Full Name *</Text>
                 <TextInput
                   style={styles.textInput}
@@ -576,6 +596,14 @@ export default function PatientsScreen() {
                   <Text style={styles.errorBoxText}>{editFormError}</Text>
                 </View>
               )}
+
+              {/* Profile Picture */}
+              <AvatarPicker
+                uri={editProfilePicture}
+                name={editFullName || editingPatient?.fullName || 'Patient'}
+                onChange={setEditProfilePicture}
+                label="Patient Profile Picture"
+              />
 
               <Text style={styles.fieldLabel}>Full Name *</Text>
               <TextInput
@@ -745,6 +773,12 @@ const styles = StyleSheet.create({
   },
   selectedAvatar: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
   avatarText: { fontSize: 18, fontWeight: '700', color: '#2563eb' },
+  cardAvatarImage: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    resizeMode: 'cover',
+  },
   selectedAvatarText: { color: '#ffffff' },
   patientDetails: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center' },

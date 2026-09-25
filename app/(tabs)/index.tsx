@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -122,9 +123,13 @@ export default function DashboardScreen() {
       <View style={styles.profileCard}>
         <View style={styles.profileHeader}>
           <View style={styles.profileAvatar}>
-            <Text style={styles.profileAvatarText}>
-              {displayName.charAt(0).toUpperCase()}
-            </Text>
+            {myInfo?.profilePicture ? (
+              <Image source={{ uri: myInfo.profilePicture }} style={styles.profileAvatarImage} />
+            ) : (
+              <Text style={styles.profileAvatarText}>
+                {displayName.charAt(0).toUpperCase()}
+              </Text>
+            )}
           </View>
           <View style={styles.profileHeaderInfo}>
             <Text style={styles.profileName}>{displayName}</Text>
@@ -414,6 +419,11 @@ const styles = StyleSheet.create({
     borderColor: '#bfdbfe',
   },
   profileAvatarText: { fontSize: 22, fontWeight: '700', color: '#2563eb' },
+  profileAvatarImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+  },
   profileHeaderInfo: { flex: 1 },
   profileName: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
   profileUsername: { fontSize: 13, color: '#64748b', marginTop: 1 },

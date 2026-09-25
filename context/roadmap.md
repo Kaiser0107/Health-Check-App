@@ -620,3 +620,25 @@ service cloud.firestore {
 - [x] Admin can upload, take a photo with camera, change, or remove patient profile picture
 - [x] Profile picture appears on patient roster card and health dashboard avatar
 - [x] Profile updates persist in local storage, roster, and Firestore seamlessly
+
+---
+
+## Milestone 14 — Fix Expo Router Unmounted Root Layout Navigation
+
+> **Goal:** Fix the "Attempted to navigate before mounting the Root Layout component" crash during app launch and web reload.
+
+### Work Completed
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 14.1 | Remove `WebReloadGate` wrapper and imperative router calls from Root Layout | `app/_layout.tsx` | ✅ |
+| 14.2 | Implement native browser reload redirect via `window.location.replace('/')` and clear cached auth session | `app/_layout.tsx` | ✅ |
+| 14.3 | Re-export `SplashScreen` directly on root index (`app/index.tsx`) to avoid launch redirect before navigator is ready | `app/index.tsx` | ✅ |
+| 14.4 | Verify static export and Metro bundling pass cleanly | `package.json`, `dist` | ✅ |
+
+### Verify Before Closing Milestone
+- [x] `npx tsc --noEmit` — 0 errors ✅
+- [x] `npx expo export --platform web` — bundles and exports cleanly without uncaught errors
+- [x] Launching Expo immediately renders drop logo splash screen with no navigation errors
+- [x] Browser reload cleanly routes to `/` and replays drop logo before login
+- [x] Sign out navigates to `/splash` with drop logo animation

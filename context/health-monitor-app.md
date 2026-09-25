@@ -51,14 +51,14 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Styling | React Native `StyleSheet` API | Separated from logic; no utility-class library |
 | Build order | Skeleton-first, design second | Correct logic before visual polish |
 | History charts | Yes — line chart per vital | Meaningful trend visibility |
-| **Splash Screen** | **Animated Drop Logo screen** (`app/splash.tsx`) | Branded entry point; appears on every app launch, reload, and sign out |
+| **Splash Screen** | **Animated Drop Logo screen** rendered directly on root (`app/index.tsx` & `app/splash.tsx`) | Branded entry point; renders on initial launch with 0 redirect, eliminating unmounted navigator crashes; re-usable on sign out |
+| **Web Reload & Sign Out** | Native browser navigation (`window.location.replace('/')`) + drop logo replay | Prevents Expo Router `assertIsReady` exceptions while ensuring browser reload and sign out always replay drop logo animation cleanly |
 | **Authentication** | **Username & Password** (Firebase Auth with internal domain) | No real email required; unique usernames with persistent cloud auth |
 | **Login Screen** | **Dedicated screen** (`app/login.tsx`) — Sign In Only | Public register removed; Admin provisions all patient accounts |
 | **Two Roles Only** | **Admin vs User/Patient** | Simplified 2-tier role hierarchy; User and Patient are 1:1 identical |
 | **Admin Role** | Hardcoded list in `constants/adminUsers.ts` | High security, tamper-proof, non-elevatable |
 | **Patient Provisioning** | Ephemeral Secondary Firebase App (`lib/auth.ts`) | Admin provisions patient credentials without being logged out |
 | **Patient Data Scope** | `patientId` (Firebase UID) as storage key namespace | Prevents cross-patient data leakage on shared device |
-| **Web Reload & Sign Out** | Route to Drop Logo (`/splash`) before Login | Ensures reload and sign-out always replay drop logo animation cleanly |
 | **Date Selection** | `DatePickerField` modal with year jump | Replaces manual typing; prevents date formatting issues & auto-calculates age |
 | **Country Phone Formatting** | `CountryPhoneInput` with Philippines 🇵🇭 default | Country selector dialog formatting calling code + national digits (+63) |
 | **Admin Patient Edit** | `updatePatient` modal in Patients tab | Allows Admins to update patient demographics post-creation |

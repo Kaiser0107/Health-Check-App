@@ -48,6 +48,19 @@ export async function syncGetRecords(patientId: string): Promise<HealthRecord[]>
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as HealthRecord));
 }
 
+export async function syncCreatePatientDoc(uid: string, username: string, info: MyInfo): Promise<void> {
+  if (!isFirebaseConfigured) return;
+  try {
+    await setDoc(doc(db, 'patients', uid), {
+      ...info,
+      username,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn('[Firestore] syncCreatePatientDoc error:', err);
+  }
+}
+
 // ─── Admin: Patient List ──────────────────────────────────────────────────────
 
 import { getLocalRoster, removeLocalPatientFromRoster } from './storage';
@@ -61,20 +74,20 @@ export async function adminGetAllPatients(): Promise<PatientSummary[]> {
     return getLocalRoster();
   }
   try {
-    const snap = await getDocs(
-      query(collection(db, 'users'), orderBy('createdAt', 'asc'))
-    );
-    const remoteList = snap.docs
-      .map((d) => d.data())
-      .filter((u) => u.role === 'patient')
-      .map((u) => ({
-        uid: u.uid,
-        username: u.username ?? (u.email ? u.email.split('@')[0] : 'patient'),
-        email: u.email,
-        fullName: u.fullName ?? u.username ?? 'Patient',
-        patientId: u.patientId,
-        createdAt: u.createdAt,
-      })) as PatientSummary[];
+    const snap = await getDocs(collection(db, 'patients'));
+    const remoteList = snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        uid: d.id,
+        username: data.username ?? d.id,
+        fullName: data.fullName ?? 'Patient',
+        age: data.age,
+        sex: data.sex,
+        contactNumber: data.contactNumber,
+        patientId: data.patientId,
+        createdAt: data.createdAt ?? new Date().toISOString(),
+      };
+    }) as PatientSummary[];
 
     // Also merge any locally created patients
     const localList = await getLocalRoster();

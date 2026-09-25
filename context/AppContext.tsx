@@ -15,7 +15,12 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react';
-import { HealthRecord, MyInfo, PatientSummary } from '../schemas/health.schema';
+import {
+  HealthRecord,
+  MyInfo,
+  PatientSummary,
+  CreatePatientAccountInput,
+} from '../schemas/health.schema';
 import {
   getLocalMyInfo,
   saveLocalMyInfo,
@@ -23,7 +28,6 @@ import {
   addLocalRecord,
   deleteLocalRecord,
   clearPatientData,
-  saveLocalPatientToRoster,
 } from '../lib/storage';
 import {
   syncSaveMyInfo,
@@ -31,8 +35,11 @@ import {
   syncGetRecords,
   syncAddRecord,
   adminGetAllPatients,
-  adminDeletePatient,
 } from '../lib/firestore';
+import {
+  adminCreatePatientUser,
+  adminDeletePatientUser,
+} from '../lib/auth';
 import { useAuth } from './AuthContext';
 
 interface AppContextValue {
@@ -56,9 +63,9 @@ interface AppContextValue {
   patients: PatientSummary[];
   /** Select a patient to view/edit (admin only). */
   selectPatient: (uid: string) => Promise<void>;
-  /** Create a new patient profile (admin only). */
-  createPatient: (info: MyInfo) => Promise<string>;
-  /** Delete a patient and their data (admin only). */
+  /** Create a new unified patient user account (admin only). */
+  createPatient: (input: CreatePatientAccountInput) => Promise<string>;
+  /** Delete a patient and their credentials/data (admin only). */
   deletePatient: (uid: string) => Promise<void>;
   /** Refresh the admin patients list. */
   refreshPatients: () => Promise<void>;
@@ -161,13 +168,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [isAdmin, loadPatientData]
   );
 
-  // ─── Admin: delete a patient ───────────────────────────────────────────────
+  // ─── Admin: delete a patient user account ──────────────────────────────────
   const deletePatient = useCallback(
     async (uid: string) => {
       if (!isAdmin) return;
       try {
         setIsSaving(true);
-        await Promise.all([clearPatientData(uid), adminDeletePatient(uid)]);
+        await adminDeletePatientUser(uid);
         setPatients((prev) => prev.filter((p) => p.uid !== uid));
         if (currentPatientId === uid) {
           setCurrentPatientId(null);
@@ -185,40 +192,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [isAdmin, currentPatientId]
   );
 
-  // ─── Admin: create a new patient profile ──────────────────────────────────
+  // ─── Admin: create a new unified patient user account ─────────────────────
   const createPatient = useCallback(
-    async (info: MyInfo): Promise<string> => {
+    async (input: CreatePatientAccountInput): Promise<string> => {
       try {
         setIsSaving(true);
         setError(null);
-        const newPatientId =
-          info.patientId?.trim() ||
-          'pat_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
-        const patientRecord: MyInfo = { ...info, patientId: newPatientId };
-
-        // 1. Save profile to storage & Firestore
-        await saveLocalMyInfo(newPatientId, patientRecord);
-        await syncSaveMyInfo(newPatientId, patientRecord);
-
-        // 2. Add to roster
-        const summary: PatientSummary = {
-          uid: newPatientId,
-          username:
-            info.patientId?.toLowerCase().replace(/[^a-z0-9]/g, '_') ||
-            info.fullName.toLowerCase().replace(/[^a-z0-9]/g, '_') ||
-            newPatientId,
-          fullName: info.fullName,
-          patientId: newPatientId,
+        const newUid = await adminCreatePatientUser(input);
+        const newSummary: PatientSummary = {
+          uid: newUid,
+          username: input.username.trim().toLowerCase(),
+          fullName: input.fullName.trim(),
+          age: input.age,
+          sex: input.sex,
+          contactNumber: input.contactNumber.trim(),
+          patientId: input.patientId?.trim() || `PAT-${input.username.trim().toUpperCase()}`,
           createdAt: new Date().toISOString(),
         };
-        await saveLocalPatientToRoster(summary);
 
-        // 3. Update local state
-        setPatients((prev) => [summary, ...prev.filter((p) => p.uid !== newPatientId)]);
-        return newPatientId;
+        // Update local state
+        setPatients((prev) => [newSummary, ...prev.filter((p) => p.uid !== newUid)]);
+        return newUid;
       } catch (err: any) {
         console.error('[AppContext] Error creating patient:', err);
-        setError(err?.message || 'Failed to create patient');
+        setError(err?.message || 'Failed to create patient account');
         throw err;
       } finally {
         setIsSaving(false);

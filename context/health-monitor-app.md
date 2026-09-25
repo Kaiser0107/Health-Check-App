@@ -51,13 +51,14 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | Styling | React Native `StyleSheet` API | Separated from logic; no utility-class library |
 | Build order | Skeleton-first, design second | Correct logic before visual polish |
 | History charts | Yes — line chart per vital | Meaningful trend visibility |
-| **Splash Screen** | **Animated Drop Logo screen** (`app/splash.tsx`) | Branded entry point; appears on every app launch before auth check |
+| **Splash Screen** | **Animated Drop Logo screen** (`app/splash.tsx`) | Branded entry point; appears on every app launch, reload, and sign out |
 | **Authentication** | **Username & Password** (Firebase Auth with internal domain) | No real email required; unique usernames with persistent cloud auth |
-| **Login Screen** | **Dedicated screen** (`app/login.tsx`) — Sign In & Create Account | Required gateway to main app; sits between Splash and Tab Navigator |
-| **Auth** | Username & Password + Firestore role | Role resolved at registration from hardcoded admin usernames list |
-| **Admin Role** | Username list in `constants/adminUsers.ts` | Hardcoded, manually managed by admin; simple and secure |
+| **Login Screen** | **Dedicated screen** (`app/login.tsx`) — Sign In Only | Public register removed; Admin provisions all patient accounts |
+| **Two Roles Only** | **Admin vs User/Patient** | Simplified 2-tier role hierarchy; User and Patient are 1:1 identical |
+| **Admin Role** | Hardcoded list in `constants/adminUsers.ts` | High security, tamper-proof, non-elevatable |
+| **Patient Provisioning** | Ephemeral Secondary Firebase App (`lib/auth.ts`) | Admin provisions patient credentials without being logged out |
 | **Patient Data Scope** | `patientId` (Firebase UID) as storage key namespace | Prevents cross-patient data leakage on shared device |
-| **Web Reload & Sign Out** | Route to Drop Logo (`/splash`) before Login | Ensures reload and sign-out always replay drop logo animation before showing login |
+| **Web Reload & Sign Out** | Route to Drop Logo (`/splash`) before Login | Ensures reload and sign-out always replay drop logo animation cleanly |
 
 ---
 
@@ -70,19 +71,19 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 
 ---
 
-## Role Limitations & Security Boundaries
+## Role Limitations & Security Boundaries (2 Roles Only)
 
-### Regular User (Patient) Limitations:
-- **No Access to Patients Roster**: The `Patients` tab is hidden from navigation (`href: null`).
+### User / Patient Account Limitations:
+- **Dashboard & Settings Only**: Patients can only access their personal **Dashboard** and **Settings** (for sign out). `Patients`, `Log Health`, `History`, and `My Info` are hidden.
+- **Embedded Demographics**: Personal demographics are displayed directly on the top card of the personal Dashboard.
+- **No Self-Registration**: Accounts are provisioned solely by clinical Administrators.
 - **No Cross-Patient Access**: The user cannot view, select, edit, or delete any other patient's data.
-- **Context-Locked**: `currentPatientId` is permanently locked to `user.uid`. All vitals logged and health history charts displayed are strictly the user's own.
-- **No Account Provisioning**: Cannot create or delete other patient accounts.
-- **No Self-Elevation**: Admin usernames are hardcoded in `constants/adminUsers.ts`.
+- **Context-Locked**: `currentPatientId` is permanently locked to `user.uid`. All vitals displayed are strictly the user's own.
 
-### Administrator Limitations:
-- **Management-Only**: Admins have no personal health profile; the `My Info` tab is hidden (`href: null`).
-- **Cannot View Dashboard Unselected**: The admin dashboard requires selecting a patient from the roster first.
-- **Code-Level Role Management**: Admins cannot grant admin status from the app UI.
+### Administrator Capabilities:
+- **Sole Account Provisioning**: Only Admins can create or delete User/Patient accounts.
+- **Roster & Clinical Management**: Admins select patients from the roster, monitor vitals on the dashboard, record clinical measurements, and review history.
+- **Session Preservation**: Admin account creation uses an ephemeral secondary Firebase app so the Admin session is never interrupted.
 
 ---
 

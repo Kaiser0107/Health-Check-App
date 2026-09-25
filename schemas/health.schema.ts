@@ -158,6 +158,9 @@ export const PatientSummarySchema = z.object({
   username: z.string(),
   email: z.string().optional(),
   fullName: z.string(),
+  age: z.number().optional(),
+  sex: z.enum(['Male', 'Female']).optional(),
+  contactNumber: z.string().optional(),
   patientId: z.string().optional(),
   createdAt: z.string(),    // ISO timestamp
 });
@@ -201,3 +204,24 @@ export const RegisterSchema = z
     path: ['confirmPassword'],
   });
 export type RegisterInput = z.infer<typeof RegisterSchema>;
+
+/** Unified Patient & User account creation schema (Admin only) */
+export const CreatePatientAccountSchema = z.object({
+  username: UsernameSchema,
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  fullName: z.string().min(1, 'Full name is required').max(100),
+  age: z.coerce
+    .number({ message: 'Please enter a valid age' })
+    .int('Age must be a whole number')
+    .min(1, 'Age must be greater than 0')
+    .max(150, 'Please enter a valid age'),
+  sex: z.enum(['Male', 'Female'], {
+    message: 'Please select Male or Female',
+  }),
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  contactNumber: z.string().min(1, 'Contact number is required'),
+  address: z.string().min(1, 'Address is required'),
+  patientId: z.string().optional(),
+});
+export type CreatePatientAccountInput = z.infer<typeof CreatePatientAccountSchema>;
+

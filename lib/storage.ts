@@ -116,6 +116,9 @@ export interface RosterPatient {
   username: string;
   email?: string;
   fullName: string;
+  age?: number;
+  sex?: 'Male' | 'Female';
+  contactNumber?: string;
   patientId?: string;
   createdAt: string;
 }

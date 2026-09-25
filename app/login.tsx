@@ -1,7 +1,12 @@
 /**
- * Login Screen — Username & Password Authentication.
- * Supports: Sign In, Create Account (toggle), Quick Demo autofill.
- * Errors shown inline — no Alert.alert (cross-platform safe).
+ * Login Screen — Clinical & Patient Sign In.
+ * 
+ * Roles:
+ * - Admin: Manages roster, creates/deletes patient accounts, logs vitals, views history.
+ * - Patient: Views personal dashboard (demographics, health status, vitals) and settings.
+ * 
+ * Public registration is disabled: All patient accounts are provisioned exclusively
+ * by an Administrator from the Patients roster.
  */
 import React, { useState } from 'react';
 import {
@@ -19,16 +24,12 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import { UsernameSchema } from '../schemas/health.schema';
 
-type Mode = 'signin' | 'register';
-
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, register, authError, clearAuthError, isLoading } = useAuth();
+  const { signIn, authError, clearAuthError } = useAuth();
 
-  const [mode, setMode] = useState<Mode>('signin');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,13 +40,10 @@ export default function LoginScreen() {
     if (!cleanUser) return 'Username is required.';
     const result = UsernameSchema.safeParse(cleanUser);
     if (!result.success) {
-      return result.error.issues?.[0]?.message || 'Invalid username.';
+      return result.error.issues?.[0]?.message || 'Invalid username format.';
     }
     if (!password) return 'Password is required.';
     if (password.length < 6) return 'Password must be at least 6 characters.';
-    if (mode === 'register' && password !== confirmPassword) {
-      return 'Passwords do not match.';
-    }
     return null;
   }
 
@@ -60,12 +58,7 @@ export default function LoginScreen() {
     setSubmitting(true);
 
     try {
-      let loggedUser;
-      if (mode === 'signin') {
-        loggedUser = await signIn(username.trim(), password);
-      } else {
-        loggedUser = await register(username.trim(), password);
-      }
+      const loggedUser = await signIn(username.trim(), password);
 
       if (loggedUser?.role === 'admin') {
         router.replace('/(tabs)/patients' as any);
@@ -73,18 +66,10 @@ export default function LoginScreen() {
         router.replace('/(tabs)' as any);
       }
     } catch {
-      // Error is set in AuthContext
+      // Error message is stored in AuthContext and displayed via displayError
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function switchMode(next: Mode) {
-    setMode(next);
-    setLocalError(null);
-    clearAuthError();
-    setPassword('');
-    setConfirmPassword('');
   }
 
   return (
@@ -98,12 +83,12 @@ export default function LoginScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>🩺</Text>
+          <View style={styles.logoCircle}>
+            <Text style={styles.logoIcon}>🩺</Text>
           </View>
           <Text style={styles.appTitle}>Health Check App</Text>
           <Text style={styles.tagline}>
-            {mode === 'signin' ? 'Sign in with your username' : 'Create a new account'}
+            Sign in with your clinical credentials or patient account
           </Text>
         </View>
 
@@ -129,7 +114,7 @@ export default function LoginScreen() {
             placeholderTextColor="#94a3b8"
             autoCapitalize="none"
             autoCorrect={false}
-            accessibilityLabel="Username"
+            accessibilityLabel="Username input"
           />
 
           {/* Password Input */}
@@ -146,87 +131,46 @@ export default function LoginScreen() {
             placeholderTextColor="#94a3b8"
             secureTextEntry
             autoCapitalize="none"
-            accessibilityLabel="Password"
+            accessibilityLabel="Password input"
           />
-
-          {/* Confirm Password (Register only) */}
-          {mode === 'register' && (
-            <>
-              <Text style={styles.label}>Confirm Password</Text>
-              <TextInput
-                style={styles.input}
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  if (localError) setLocalError(null);
-                }}
-                placeholder="Re-enter your password"
-                placeholderTextColor="#94a3b8"
-                secureTextEntry
-                autoCapitalize="none"
-                accessibilityLabel="Confirm Password"
-              />
-            </>
-          )}
 
           {/* Submit Button */}
           <TouchableOpacity
             style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
             onPress={handleSubmit}
             disabled={submitting}
-            accessibilityLabel={mode === 'signin' ? 'Sign In' : 'Create Account'}
+            accessibilityLabel="Sign In"
           >
             {submitting ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
-              <Text style={styles.submitButtonText}>
-                {mode === 'signin' ? 'Sign In' : 'Create Account'}
-              </Text>
+              <Text style={styles.submitButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
         </View>
 
-        {/* Toggle mode */}
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>
-            {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}
+        {/* Notice for new patients */}
+        <View style={styles.noticeBox}>
+          <Text style={styles.noticeText}>
+            🔒 Patient accounts are created directly by clinic administrators. Contact your clinician to receive your login credentials.
           </Text>
-          <TouchableOpacity
-            onPress={() => switchMode(mode === 'signin' ? 'register' : 'signin')}
-            accessibilityLabel={mode === 'signin' ? 'Create Account' : 'Sign In'}
-          >
-            <Text style={styles.toggleLink}>
-              {mode === 'signin' ? ' Create Account' : ' Sign In'}
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {/* Quick Demo Autofill Chips */}
         <View style={styles.demoSection}>
           <Text style={styles.demoLabel}>Demo Quick-Fill:</Text>
-          <View style={styles.demoButtonsRow}>
+          <View style={styles.demoButtonsCol}>
             <TouchableOpacity
               style={[styles.demoChip, styles.adminDemoChip]}
               onPress={() => {
                 setUsername('admin');
                 setPassword('admin123');
-                if (mode === 'register') setConfirmPassword('admin123');
+                if (localError) setLocalError(null);
+                if (authError) clearAuthError();
               }}
               accessibilityLabel="Autofill Admin account"
             >
-              <Text style={styles.adminDemoChipText}>🛡️ Admin (admin)</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.demoChip, styles.supervisorDemoChip]}
-              onPress={() => {
-                setUsername('supervisor');
-                setPassword('supervisor123');
-                if (mode === 'register') setConfirmPassword('supervisor123');
-              }}
-              accessibilityLabel="Autofill Supervisor account"
-            >
-              <Text style={styles.supervisorDemoChipText}>🛡️ Supervisor (supervisor)</Text>
+              <Text style={styles.adminDemoChipText}>🛡️ Admin (admin / admin123)</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -234,11 +178,12 @@ export default function LoginScreen() {
               onPress={() => {
                 setUsername('patient1');
                 setPassword('patient123');
-                if (mode === 'register') setConfirmPassword('patient123');
+                if (localError) setLocalError(null);
+                if (authError) clearAuthError();
               }}
               accessibilityLabel="Autofill Patient account"
             >
-              <Text style={styles.patientDemoChipText}>👤 Patient (patient1)</Text>
+              <Text style={styles.patientDemoChipText}>👤 Patient 1 (patient1 / patient123)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -255,26 +200,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 48,
   },
-  header: { alignItems: 'center', marginBottom: 32 },
-  logoPlaceholder: {
+  header: { alignItems: 'center', marginBottom: 28 },
+  logoCircle: {
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
   },
-  logoText: { fontSize: 34 },
-  appTitle: { fontSize: 26, fontWeight: '700', color: '#0f172a', marginBottom: 4 },
-  tagline: { fontSize: 14, color: '#64748b' },
+  logoIcon: { fontSize: 34 },
+  appTitle: { fontSize: 26, fontWeight: '700', color: '#0f172a', marginBottom: 6 },
+  tagline: { fontSize: 14, color: '#64748b', textAlign: 'center', maxWidth: 300, lineHeight: 20 },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    marginBottom: 20,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -311,15 +258,22 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+  noticeBox: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-  toggleLabel: { fontSize: 14, color: '#64748b' },
-  toggleLink: { fontSize: 14, color: '#2563eb', fontWeight: '600' },
+  noticeText: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   demoSection: {
-    marginTop: 24,
+    marginTop: 8,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
@@ -329,22 +283,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#64748b',
-    marginBottom: 8,
+    marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  demoButtonsRow: { width: '100%', gap: 8 },
+  demoButtonsCol: { width: '100%', gap: 8 },
   demoChip: {
-    paddingVertical: 10,
+    paddingVertical: 11,
     paddingHorizontal: 14,
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
   },
   adminDemoChip: { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' },
-  supervisorDemoChip: { backgroundColor: '#f0f9ff', borderColor: '#bae6fd' },
   patientDemoChip: { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
   adminDemoChipText: { fontSize: 13, fontWeight: '600', color: '#1d4ed8' },
-  supervisorDemoChipText: { fontSize: 13, fontWeight: '600', color: '#0369a1' },
   patientDemoChipText: { fontSize: 13, fontWeight: '600', color: '#15803d' },
 });

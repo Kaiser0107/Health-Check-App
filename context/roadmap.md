@@ -38,6 +38,7 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | **9** | **Splash Screen** | **Drop Logo bounce animation — auto-transitions based on auth** | ✅ Done |
 | **10** | **Login Screen** | **Username & Password Auth — Sign In / Create Account (No email needed)** | ✅ Done |
 | **11** | **Role System** | **AuthContext + Hardcoded Admin Usernames (`constants/adminUsers.ts`) + Role Routing** | ✅ Done |
+| **12** | **Unified User-Patient Flow** | **2 Roles Only: Unified account/profile, Admin-only provisioning, Patient dashboard-only** | ✅ Done |
 | 5 | Dashboard Screen | Role-aware: Patient (own vitals) vs Admin (selected patient overview) | ✅ Done |
 | 7 | Settings Screen | Account profile, Role badge, Firebase Sign Out, Clear data | ✅ Done |
 | 6 | History Screen | Role-aware: List past records per patient with timestamps | ⬜ Next Up |
@@ -554,3 +555,36 @@ service cloud.firestore {
 - [x] Non-admin username → registers/signs in as patient → sees My Info tab, not Patients tab
 - [x] Sign out from Settings → returns to login screen cleanly
 - [x] Splash Screen drops logo then routes to proper screen based on auth state
+
+---
+
+## Milestone 12 — Unified User-Patient Architecture & Admin Authority
+
+> **Goal:** Align system strictly to two roles: Admin and User/Patient.
+> A User account IS a Patient account (unified credentials and demographic profile).
+> Sole Admin authority: Only Admin can add or delete accounts. Public registration removed.
+> Patient navigation restricted to Dashboard (with embedded demographics) and Settings.
+
+### Work Completed
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 12.1 | Schema expansion: `CreatePatientAccountSchema` with unified credentials & demographics | `schemas/health.schema.ts` | ✅ |
+| 12.2 | In-memory persistence & config export for secondary app | `lib/firebase.ts` | ✅ |
+| 12.3 | Secondary Firebase App provisioning in `lib/auth.ts` (`adminCreatePatientUser`, `adminDeletePatientUser`) without Admin session disruption | `lib/auth.ts` | ✅ |
+| 12.4 | Firestore sync helpers for unified patient demographic records | `lib/firestore.ts` | ✅ |
+| 12.5 | AppContext wiring for unified account creation and cascading account deletion | `context/AppContext.tsx` | ✅ |
+| 12.6 | Login Screen redesigned: Sign In only, public registration removed, demo chips updated | `app/login.tsx` | ✅ |
+| 12.7 | Tab Layout navigation updated: Patient sees ONLY Dashboard and Settings; Admin sees Dashboard, Patients, Log Health, History, Settings | `app/(tabs)/_layout.tsx` | ✅ |
+| 12.8 | Dashboard Screen enhanced: Full Patient Demographic Profile Card embedded at the top of the dashboard for Patient; Admin monitoring view | `app/(tabs)/index.tsx` | ✅ |
+| 12.9 | Patients Roster updated: Modal collects credentials (`username`, `password`) + demographics; full card display; delete cascade | `app/(tabs)/patients.tsx` | ✅ |
+| 12.10 | Documentation updated across requirements, architecture, and roadmap | `context/*` | ✅ |
+
+### Verify Before Closing Milestone
+- [x] `npx tsc --noEmit` — 0 errors ✅
+- [x] Public registration completely removed from login screen
+- [x] Admin can provision patient credentials & demographic info simultaneously
+- [x] Patient logs in and sees only Dashboard and Settings
+- [x] Patient's personal demographics and clinical vitals display on Dashboard
+- [x] Admin can delete patient account and all their data
+- [x] Sign out and web reload return to Drop Logo → Login screen cleanly

@@ -69,34 +69,36 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ─── My Info — patient only (admin manages via Patients tab) ────── */}
+      {/* ─── My Info — unified into dashboard demographics ─────────────── */}
       <Tabs.Screen
         name="my-info"
         options={{
           title: 'My Info',
-          href: isAdmin ? null : undefined, // hide for admins
+          href: null, // always hidden; demographics rendered directly on Dashboard
           tabBarIcon: ({ focused, color, size }) => (
             <TabIcon name="person" focused={focused} color={color} size={size} />
           ),
         }}
       />
 
-      {/* ─── Log Health — both roles ────────────────────────────────────── */}
+      {/* ─── Log Health — admin only ────────────────────────────────────── */}
       <Tabs.Screen
         name="log-health"
         options={{
           title: 'Log Health',
+          href: isAdmin ? undefined : null, // admin only
           tabBarIcon: ({ focused, color, size }) => (
             <TabIcon name="add-circle" focused={focused} color={color} size={size} />
           ),
         }}
       />
 
-      {/* ─── History — both roles ───────────────────────────────────────── */}
+      {/* ─── History — admin only ───────────────────────────────────────── */}
       <Tabs.Screen
         name="history"
         options={{
           title: 'History',
+          href: isAdmin ? undefined : null, // admin only
           tabBarIcon: ({ focused, color, size }) => (
             <TabIcon name="bar-chart" focused={focused} color={color} size={size} />
           ),

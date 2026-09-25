@@ -5,17 +5,31 @@
  *
  * Role is resolved from the hardcoded ADMIN_USERNAMES list in constants/adminUsers.ts.
  */
+import { initializeApp, deleteApp } from 'firebase/app';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
+  getAuth,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth, db, isFirebaseConfigured } from './firebase';
+import { auth, db, isFirebaseConfigured, firebaseConfig } from './firebase';
 import { ADMIN_USERNAMES } from '../constants/adminUsers';
-import { saveLocalPatientToRoster } from './storage';
-import type { UserRole, FirestoreUser } from '../schemas/health.schema';
+import {
+  saveLocalPatientToRoster,
+  removeLocalPatientFromRoster,
+  saveLocalMyInfo,
+  clearPatientData,
+} from './storage';
+import { syncCreatePatientDoc, adminDeletePatient } from './firestore';
+import type {
+  UserRole,
+  FirestoreUser,
+  CreatePatientAccountInput,
+  MyInfo,
+  PatientSummary,
+} from '../schemas/health.schema';
 
 export interface AppUser {
   uid: string;
@@ -173,3 +187,89 @@ export async function resolveAppUser(uid: string, fallbackEmailOrUsername?: stri
   const role = userDoc?.role ?? resolveRole(fallbackUser);
   return { uid, username: fallbackUser, role };
 }
+
+/**
+ * Admin creates a unified Patient & User account.
+ * Provisions credentials in Firebase Auth without disturbing the active Admin session,
+ * writes profile documents to Firestore, and adds to the local roster.
+ */
+export async function adminCreatePatientUser(
+  input: CreatePatientAccountInput
+): Promise<string> {
+  const cleanUsername = input.username.trim().toLowerCase();
+  const internalEmail = usernameToInternalEmail(cleanUsername);
+  const now = new Date().toISOString();
+
+  let uid: string;
+  if (!isFirebaseConfigured) {
+    uid = 'usr_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+  } else {
+    // Ephemeral secondary app ensures the currently logged-in Admin is NEVER signed out
+    const secondaryAppName = `ProvisionApp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+    const secondaryAuth = getAuth(secondaryApp);
+
+    try {
+      const { user } = await createUserWithEmailAndPassword(secondaryAuth, internalEmail, input.password);
+      uid = user.uid;
+      await firebaseSignOut(secondaryAuth);
+    } catch (err: any) {
+      if (err.code === 'auth/email-already-in-use') {
+        throw new Error(`Username "${input.username}" is already taken. Please choose another.`);
+      }
+      throw err;
+    } finally {
+      await deleteApp(secondaryApp).catch(() => {});
+    }
+
+    // Write Firestore user document
+    await writeUserDoc(uid, cleanUsername, 'patient');
+  }
+
+  // Demographic profile for this patient
+  const patientProfile: MyInfo = {
+    fullName: input.fullName.trim(),
+    age: input.age,
+    sex: input.sex,
+    dateOfBirth: input.dateOfBirth,
+    contactNumber: input.contactNumber.trim(),
+    address: input.address.trim(),
+    patientId: input.patientId?.trim() || `PAT-${cleanUsername.toUpperCase()}`,
+  };
+
+  // Save profile locally and sync to Firestore
+  await saveLocalMyInfo(uid, patientProfile);
+  if (isFirebaseConfigured) {
+    await syncCreatePatientDoc(uid, cleanUsername, patientProfile);
+  }
+
+  // Add to local patients roster
+  const summary: PatientSummary = {
+    uid,
+    username: cleanUsername,
+    fullName: patientProfile.fullName,
+    age: patientProfile.age,
+    sex: patientProfile.sex,
+    contactNumber: patientProfile.contactNumber,
+    patientId: patientProfile.patientId,
+    createdAt: now,
+  };
+  await saveLocalPatientToRoster(summary);
+
+  return uid;
+}
+
+/**
+ * Admin deletes a unified Patient & User account.
+ */
+export async function adminDeletePatientUser(uid: string): Promise<void> {
+  // 1. Remove from local roster
+  await removeLocalPatientFromRoster(uid);
+  // 2. Clear local storage records and profile
+  await clearPatientData(uid);
+  // 3. Delete from Firestore
+  if (isFirebaseConfigured) {
+    await adminDeletePatient(uid);
+  }
+}
+

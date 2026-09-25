@@ -18,7 +18,11 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { PatientSummary, MyInfo } from '../../schemas/health.schema';
+import {
+  PatientSummary,
+  CreatePatientAccountSchema,
+  CreatePatientAccountInput,
+} from '../../schemas/health.schema';
 
 export default function PatientsScreen() {
   const router = useRouter();
@@ -35,6 +39,8 @@ export default function PatientsScreen() {
   } = useApp();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [sex, setSex] = useState<'Male' | 'Female'>('Male');
@@ -45,6 +51,8 @@ export default function PatientsScreen() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const resetForm = () => {
+    setUsername('');
+    setPassword('');
     setFullName('');
     setAge('');
     setSex('Male');
@@ -58,14 +66,23 @@ export default function PatientsScreen() {
   const handleSelectPatient = useCallback(
     async (patient: PatientSummary) => {
       await selectPatient(patient.uid);
-      Alert.alert(
-        'Patient Selected',
-        `Active patient set to ${patient.fullName}. You can now view their Dashboard or Log Health records.`,
-        [
-          { text: 'View Dashboard', onPress: () => router.push('/(tabs)') },
-          { text: 'Stay Here', style: 'cancel' },
-        ]
-      );
+      if (Platform.OS === 'web') {
+        const goToDash = window.confirm(
+          `Selected ${patient.fullName}.\n\nClick OK to open their Dashboard, or Cancel to stay on the roster.`
+        );
+        if (goToDash) {
+          router.push('/(tabs)');
+        }
+      } else {
+        Alert.alert(
+          'Patient Selected',
+          `Active patient set to ${patient.fullName}. You can now view their Dashboard or Log Health records.`,
+          [
+            { text: 'View Dashboard', onPress: () => router.push('/(tabs)') },
+            { text: 'Stay Here', style: 'cancel' },
+          ]
+        );
+      }
     },
     [selectPatient, router]
   );
@@ -84,82 +101,81 @@ export default function PatientsScreen() {
         }
       };
 
+      const confirmMessage = `Are you sure you want to permanently delete @${patient.username} (${patient.fullName})? All credentials, demographics, and clinical vitals records will be removed.`;
+
       if (Platform.OS === 'web') {
-        if (window.confirm(`Are you sure you want to delete all data for ${patient.fullName}? This cannot be undone.`)) {
+        if (window.confirm(confirmMessage)) {
           doDelete();
         }
       } else {
-        Alert.alert(
-          'Delete Patient',
-          `Are you sure you want to delete all data for ${patient.fullName}? This cannot be undone.`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Delete',
-              style: 'destructive',
-              onPress: doDelete,
-            },
-          ]
-        );
+        Alert.alert('Delete Patient Account', confirmMessage, [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete Permanently',
+            style: 'destructive',
+            onPress: doDelete,
+          },
+        ]);
       }
     },
     [deletePatient]
   );
 
   const handleCreatePatient = async () => {
-    if (!fullName.trim()) {
-      setFormError('Patient full name is required.');
-      return;
-    }
-    const parsedAge = parseInt(age, 10);
-    if (isNaN(parsedAge) || parsedAge <= 0) {
-      setFormError('Please enter a valid age.');
-      return;
-    }
-    if (!contactNumber.trim()) {
-      setFormError('Contact number is required.');
-      return;
-    }
-    if (!address.trim()) {
-      setFormError('Address is required.');
+    // 1. Validate fields with Zod schema
+    const rawData = {
+      username: username.trim(),
+      password: password.trim(),
+      fullName: fullName.trim(),
+      age: age.trim() ? parseInt(age.trim(), 10) : undefined,
+      sex,
+      dateOfBirth: dob.trim() || '2000-01-01',
+      contactNumber: contactNumber.trim(),
+      address: address.trim(),
+      patientId: patientIdInput.trim() || undefined,
+    };
+
+    const parseResult = CreatePatientAccountSchema.safeParse(rawData);
+    if (!parseResult.success) {
+      const firstIssue = parseResult.error.issues[0];
+      setFormError(firstIssue ? `${firstIssue.path.join('.')}: ${firstIssue.message}` : 'Validation error.');
       return;
     }
 
     setFormError(null);
     try {
-      const newInfo: MyInfo = {
-        fullName: fullName.trim(),
-        age: parsedAge,
-        sex,
-        dateOfBirth: dob.trim() || '2000-01-01',
-        contactNumber: contactNumber.trim(),
-        address: address.trim(),
-        patientId: patientIdInput.trim() || undefined,
-      };
-
-      const newId = await createPatient(newInfo);
+      const input: CreatePatientAccountInput = parseResult.data;
+      const newUid = await createPatient(input);
       setModalVisible(false);
       resetForm();
 
       if (Platform.OS === 'web') {
-        if (window.confirm(`Patient ${newInfo.fullName} has been registered!\n\nClick OK to view their dashboard, or Cancel to stay here.`)) {
-          await selectPatient(newId);
+        if (
+          window.confirm(
+            `Patient @${input.username} (${input.fullName}) successfully registered!\n\nClick OK to open their Dashboard, or Cancel to stay here.`
+          )
+        ) {
+          await selectPatient(newUid);
           router.push('/(tabs)');
         }
       } else {
-        Alert.alert('Success', `Patient ${newInfo.fullName} has been registered!`, [
-          {
-            text: 'Select & View Dashboard',
-            onPress: async () => {
-              await selectPatient(newId);
-              router.push('/(tabs)');
+        Alert.alert(
+          'Patient Registered',
+          `Patient account @${input.username} (${input.fullName}) has been created with full clinical access.`,
+          [
+            {
+              text: 'Open Dashboard',
+              onPress: async () => {
+                await selectPatient(newUid);
+                router.push('/(tabs)');
+              },
             },
-          },
-          { text: 'OK', style: 'cancel' },
-        ]);
+            { text: 'Stay Here', style: 'cancel' },
+          ]
+        );
       }
     } catch (err: any) {
-      setFormError(err?.message || 'Failed to create patient.');
+      setFormError(err?.message || 'Failed to create patient account.');
     }
   };
 
@@ -196,7 +212,14 @@ export default function PatientsScreen() {
                 </View>
               )}
             </View>
-            <Text style={styles.patientEmail}>@{item.username}</Text>
+            <Text style={styles.patientUsername}>@{item.username}</Text>
+            <View style={styles.patientMetaRow}>
+              {item.age ? <Text style={styles.patientMetaText}>{item.age} yrs</Text> : null}
+              {item.sex ? <Text style={styles.patientMetaText}> · {item.sex}</Text> : null}
+              {item.contactNumber ? (
+                <Text style={styles.patientMetaText}> · {item.contactNumber}</Text>
+              ) : null}
+            </View>
             {item.patientId ? (
               <Text style={styles.patientId}>ID: {item.patientId}</Text>
             ) : null}
@@ -218,8 +241,10 @@ export default function PatientsScreen() {
       {/* Header with Title and Add Button */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.title}>Patients</Text>
-          <Text style={styles.subtitle}>{patients.length} registered in roster</Text>
+          <Text style={styles.title}>Patient Accounts</Text>
+          <Text style={styles.subtitle}>
+            {patients.length} registered patient {patients.length === 1 ? 'account' : 'accounts'}
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.addButton}
@@ -229,7 +254,7 @@ export default function PatientsScreen() {
           }}
           accessibilityLabel="Add new patient"
         >
-          <Ionicons name="add" size={18} color="#ffffff" style={{ marginRight: 4 }} />
+          <Ionicons name="person-add" size={16} color="#ffffff" style={{ marginRight: 6 }} />
           <Text style={styles.addButtonText}>Add Patient</Text>
         </TouchableOpacity>
       </View>
@@ -242,17 +267,20 @@ export default function PatientsScreen() {
       ) : patients.length === 0 ? (
         <View style={styles.center}>
           <Ionicons name="people-outline" size={54} color="#94a3b8" />
-          <Text style={styles.emptyText}>No patients in roster</Text>
+          <Text style={styles.emptyText}>No Patients Registered</Text>
           <Text style={styles.emptySubText}>
-            Tap "Add Patient" above to register a patient, or wait for patients to create an account.
+            As an Administrator, you have exclusive authority to provision Patient accounts. Tap below to create the first patient account.
           </Text>
           <TouchableOpacity
             style={styles.emptyAddButton}
-            onPress={() => setModalVisible(true)}
+            onPress={() => {
+              resetForm();
+              setModalVisible(true);
+            }}
             accessibilityLabel="Add patient now"
           >
             <Ionicons name="person-add-outline" size={18} color="#2563eb" style={{ marginRight: 6 }} />
-            <Text style={styles.emptyAddButtonText}>Register First Patient</Text>
+            <Text style={styles.emptyAddButtonText}>Provision First Patient Account</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -271,7 +299,7 @@ export default function PatientsScreen() {
         />
       )}
 
-      {/* ─── ADD PATIENT MODAL ─────────────────────────────────────────────── */}
+      {/* ─── ADD PATIENT ACCOUNT MODAL ─────────────────────────────────────── */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -280,8 +308,10 @@ export default function PatientsScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>Add New Patient</Text>
-                <Text style={styles.modalSubtitle}>Register a patient profile into the roster</Text>
+                <Text style={styles.modalTitle}>Provision Patient Account</Text>
+                <Text style={styles.modalSubtitle}>
+                  Creates credentials & medical demographic profile
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}
@@ -291,105 +321,137 @@ export default function PatientsScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={styles.modalForm}>
+            <ScrollView contentContainerStyle={styles.modalForm} keyboardShouldPersistTaps="handled">
               {formError && (
                 <View style={styles.errorBox}>
                   <Text style={styles.errorBoxText}>{formError}</Text>
                 </View>
               )}
 
-              <Text style={styles.fieldLabel}>Full Name *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="e.g. John Doe"
-                placeholderTextColor="#94a3b8"
-              />
+              {/* Section 1: Login Credentials */}
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>1. Login Credentials</Text>
+                
+                <Text style={styles.fieldLabel}>Username *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="e.g. jdoe24 (min 3 chars, letters/numbers)"
+                  placeholderTextColor="#94a3b8"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
 
-              <View style={styles.twoCol}>
-                <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={styles.fieldLabel}>Age *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={age}
-                    onChangeText={setAge}
-                    keyboardType="number-pad"
-                    placeholder="e.g. 45"
-                    placeholderTextColor="#94a3b8"
-                  />
-                </View>
-
-                <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={styles.fieldLabel}>Sex *</Text>
-                  <View style={styles.sexRow}>
-                    <TouchableOpacity
-                      style={[styles.sexChip, sex === 'Male' && styles.sexChipActive]}
-                      onPress={() => setSex('Male')}
-                    >
-                      <Text style={[styles.sexChipText, sex === 'Male' && styles.sexChipTextActive]}>
-                        Male
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.sexChip, sex === 'Female' && styles.sexChipActive]}
-                      onPress={() => setSex('Female')}
-                    >
-                      <Text style={[styles.sexChipText, sex === 'Female' && styles.sexChipTextActive]}>
-                        Female
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <Text style={styles.fieldLabel}>Password *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="e.g. patientPass123 (min 6 chars)"
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
               </View>
 
-              <Text style={styles.fieldLabel}>Date of Birth (YYYY-MM-DD)</Text>
-              <TextInput
-                style={styles.textInput}
-                value={dob}
-                onChangeText={setDob}
-                placeholder="e.g. 1980-05-15"
-                placeholderTextColor="#94a3b8"
-              />
+              {/* Section 2: Demographic Profile */}
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>2. Demographic Profile</Text>
 
-              <Text style={styles.fieldLabel}>Contact Number *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={contactNumber}
-                onChangeText={setContactNumber}
-                keyboardType="phone-pad"
-                placeholder="e.g. 09123456789"
-                placeholderTextColor="#94a3b8"
-              />
+                <Text style={styles.fieldLabel}>Full Name *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={fullName}
+                  onChangeText={setFullName}
+                  placeholder="e.g. John Doe"
+                  placeholderTextColor="#94a3b8"
+                />
 
-              <Text style={styles.fieldLabel}>Address *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={address}
-                onChangeText={setAddress}
-                placeholder="e.g. 123 Health St, Manila"
-                placeholderTextColor="#94a3b8"
-              />
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={styles.fieldLabel}>Age *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={age}
+                      onChangeText={setAge}
+                      keyboardType="number-pad"
+                      placeholder="e.g. 45"
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </View>
 
-              <Text style={styles.fieldLabel}>Hospital / Patient ID (Optional)</Text>
-              <TextInput
-                style={styles.textInput}
-                value={patientIdInput}
-                onChangeText={setPatientIdInput}
-                placeholder="e.g. PAT-2026-001"
-                placeholderTextColor="#94a3b8"
-              />
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text style={styles.fieldLabel}>Sex *</Text>
+                    <View style={styles.sexRow}>
+                      <TouchableOpacity
+                        style={[styles.sexChip, sex === 'Male' && styles.sexChipActive]}
+                        onPress={() => setSex('Male')}
+                      >
+                        <Text style={[styles.sexChipText, sex === 'Male' && styles.sexChipTextActive]}>
+                          Male
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.sexChip, sex === 'Female' && styles.sexChipActive]}
+                        onPress={() => setSex('Female')}
+                      >
+                        <Text style={[styles.sexChipText, sex === 'Female' && styles.sexChipTextActive]}>
+                          Female
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+
+                <Text style={styles.fieldLabel}>Date of Birth * (YYYY-MM-DD)</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={dob}
+                  onChangeText={setDob}
+                  placeholder="e.g. 1980-05-15"
+                  placeholderTextColor="#94a3b8"
+                />
+
+                <Text style={styles.fieldLabel}>Contact Number *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={contactNumber}
+                  onChangeText={setContactNumber}
+                  keyboardType="phone-pad"
+                  placeholder="e.g. 09123456789"
+                  placeholderTextColor="#94a3b8"
+                />
+
+                <Text style={styles.fieldLabel}>Address *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={address}
+                  onChangeText={setAddress}
+                  placeholder="e.g. 123 Health St, Manila"
+                  placeholderTextColor="#94a3b8"
+                />
+
+                <Text style={styles.fieldLabel}>Hospital / Patient ID (Optional)</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={patientIdInput}
+                  onChangeText={setPatientIdInput}
+                  placeholder="e.g. PAT-2026-001"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
 
               <TouchableOpacity
                 style={[styles.saveButton, isSaving && { opacity: 0.6 }]}
                 onPress={handleCreatePatient}
                 disabled={isSaving}
-                accessibilityLabel="Save patient"
+                accessibilityLabel="Create patient account"
               >
                 {isSaving ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Text style={styles.saveButtonText}>Save Patient to Roster</Text>
+                  <Text style={styles.saveButtonText}>Provision Patient Account</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -414,14 +476,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e2e8f0',
   },
   headerLeft: { flex: 1 },
-  title: { fontSize: 28, fontWeight: '700', color: '#0f172a' },
+  title: { fontSize: 26, fontWeight: '700', color: '#0f172a' },
   subtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#2563eb',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 8,
   },
   addButtonText: { color: '#ffffff', fontSize: 13, fontWeight: '600' },
@@ -438,24 +500,26 @@ const styles = StyleSheet.create({
   },
   selectedPatientCard: {
     borderColor: '#2563eb',
-    backgroundColor: '#f0f7ff',
+    backgroundColor: '#eff6ff',
   },
   patientInfo: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#dbeafe',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
   },
-  selectedAvatar: { backgroundColor: '#2563eb' },
+  selectedAvatar: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
   avatarText: { fontSize: 18, fontWeight: '700', color: '#2563eb' },
   selectedAvatarText: { color: '#ffffff' },
   patientDetails: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center' },
-  patientName: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
+  patientName: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
   activeTag: {
     backgroundColor: '#dbeafe',
     paddingHorizontal: 6,
@@ -464,8 +528,10 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   activeTagText: { fontSize: 9, fontWeight: '800', color: '#1d4ed8' },
-  patientEmail: { fontSize: 13, color: '#64748b', marginTop: 2 },
-  patientId: { fontSize: 12, color: '#94a3b8', marginTop: 1 },
+  patientUsername: { fontSize: 13, color: '#2563eb', marginTop: 1, fontWeight: '500' },
+  patientMetaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  patientMetaText: { fontSize: 12, color: '#64748b' },
+  patientId: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
   deleteButton: { padding: 8, marginLeft: 8 },
   center: {
     flex: 1,
@@ -487,6 +553,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 18,
+    maxWidth: 320,
   },
   emptyAddButton: {
     flexDirection: 'row',
@@ -500,6 +567,7 @@ const styles = StyleSheet.create({
   },
   emptyAddButtonText: { fontSize: 14, fontWeight: '600', color: '#2563eb' },
   restrictedText: { fontSize: 16, color: '#dc2626', marginTop: 8 },
+
   // ─── Modal Styles ─────────────────────────────────────────────────────────
   modalBackdrop: {
     flex: 1,
@@ -510,21 +578,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '85%',
+    maxHeight: '90%',
     padding: 20,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
     paddingBottom: 12,
   },
   modalTitle: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
   modalSubtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
-  modalForm: { paddingBottom: 24 },
+  modalForm: { paddingBottom: 30 },
+  formSection: {
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  formSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2563eb',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   errorBox: {
     backgroundColor: '#fef2f2',
     borderWidth: 1,
@@ -542,7 +624,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: 14,
     color: '#0f172a',
     marginBottom: 12,
   },
@@ -558,7 +640,7 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   sexChipActive: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#eff6ff',
     borderColor: '#2563eb',
   },
   sexChipText: { fontSize: 13, fontWeight: '600', color: '#64748b' },
@@ -568,7 +650,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
   saveButtonText: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
 });

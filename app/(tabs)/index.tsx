@@ -87,14 +87,23 @@ export default function DashboardScreen() {
   // ─── ACTIVE DASHBOARD (Patient OR Admin with Selected Patient) ─────────────
   const statusColors = getStatusColor(overallStatus);
 
+  // Active patient metadata
+  const displayName = myInfo?.fullName || (isAdmin ? 'Selected Patient' : user?.username || 'Patient');
+  const displayUsername = isAdmin
+    ? (patients.find((p) => p.uid === currentPatientId)?.username || 'patient')
+    : (user?.username || 'patient');
+  const patientIdDisplay = myInfo?.patientId || (currentPatientId ? `PAT-${currentPatientId.slice(0, 8)}` : null);
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Top Header */}
       <View style={styles.header}>
         <View style={styles.headerTextCol}>
-          <Text style={styles.headerTitle}>Dashboard</Text>
+          <Text style={styles.headerTitle}>
+            {isAdmin ? 'Patient Dashboard' : 'My Health Dashboard'}
+          </Text>
           <Text style={styles.headerSubtitle}>
-            {isAdmin ? `Monitoring: ${myInfo?.fullName || 'Selected Patient'}` : 'Health Overview'}
+            {isAdmin ? `Monitoring: ${displayName}` : 'Unified Patient Profile & Vitals'}
           </Text>
         </View>
         {isAdmin && (
@@ -104,40 +113,61 @@ export default function DashboardScreen() {
             accessibilityLabel="Switch active patient"
           >
             <Ionicons name="swap-horizontal" size={14} color="#2563eb" />
-            <Text style={styles.switchPatientText}>Switch</Text>
+            <Text style={styles.switchPatientText}>Switch Patient</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Patient Summary Card */}
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryHeader}>
-          <View style={styles.summaryAvatar}>
-            <Text style={styles.summaryAvatarText}>
-              {myInfo?.fullName ? myInfo.fullName.charAt(0).toUpperCase() : 'P'}
+      {/* Comprehensive Patient Demographic Profile Card */}
+      <View style={styles.profileCard}>
+        <View style={styles.profileHeader}>
+          <View style={styles.profileAvatar}>
+            <Text style={styles.profileAvatarText}>
+              {displayName.charAt(0).toUpperCase()}
             </Text>
           </View>
-          <View style={styles.summaryInfo}>
-            <Text style={styles.patientName}>
-              {myInfo?.fullName || (isAdmin ? 'Patient Profile Incomplete' : 'Welcome!')}
-            </Text>
-            <Text style={styles.patientMeta}>
-              {myInfo?.age ? `Age: ${myInfo.age}` : 'Age: --'} · {myInfo?.sex || 'Sex: --'}
-              {myInfo?.patientId ? ` · ID: ${myInfo.patientId}` : ''}
-            </Text>
+          <View style={styles.profileHeaderInfo}>
+            <Text style={styles.profileName}>{displayName}</Text>
+            <Text style={styles.profileUsername}>@{displayUsername}</Text>
+            {patientIdDisplay ? (
+              <View style={styles.patientIdBadge}>
+                <Ionicons name="card-outline" size={12} color="#1d4ed8" />
+                <Text style={styles.patientIdBadgeText}>{patientIdDisplay}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
-        {!myInfo && !isAdmin && (
-          <TouchableOpacity
-            style={styles.completeProfilePrompt}
-            onPress={() => router.push('/(tabs)/my-info')}
-            accessibilityLabel="Complete profile"
-          >
-            <Ionicons name="create-outline" size={16} color="#2563eb" />
-            <Text style={styles.completeProfileText}>Tap here to complete your profile in My Info</Text>
-          </TouchableOpacity>
-        )}
+        {/* Demographic Details Grid */}
+        <View style={styles.demographicsGrid}>
+          <View style={styles.demographicItem}>
+            <Text style={styles.demoLabel}>AGE / SEX</Text>
+            <Text style={styles.demoValue}>
+              {myInfo?.age ? `${myInfo.age} yrs` : '--'} · {myInfo?.sex || '--'}
+            </Text>
+          </View>
+
+          <View style={styles.demographicItem}>
+            <Text style={styles.demoLabel}>DATE OF BIRTH</Text>
+            <Text style={styles.demoValue}>
+              {myInfo?.dateOfBirth || '--'}
+            </Text>
+          </View>
+
+          <View style={styles.demographicItem}>
+            <Text style={styles.demoLabel}>CONTACT</Text>
+            <Text style={styles.demoValue}>
+              {myInfo?.contactNumber || '--'}
+            </Text>
+          </View>
+
+          <View style={styles.demographicItem}>
+            <Text style={styles.demoLabel}>ADDRESS</Text>
+            <Text style={styles.demoValue} numberOfLines={2}>
+              {myInfo?.address || '--'}
+            </Text>
+          </View>
+        </View>
       </View>
 
       {/* Overall Health Status Banner */}
@@ -165,31 +195,49 @@ export default function DashboardScreen() {
         </View>
         <Text style={styles.overallStatusDesc}>
           {latestRecord
-            ? `Based on ${new Date(latestRecord.timestamp).toLocaleDateString()} vitals recording.`
-            : 'No vitals recorded yet. Log vitals to generate overall status.'}
+            ? `Based on clinical vitals recorded on ${new Date(latestRecord.timestamp).toLocaleDateString()}.`
+            : 'No vitals recorded yet. Overall status will update once clinical readings are logged.'}
         </Text>
       </View>
 
-      {/* Vitals Section */}
+      {/* Vitals Section Header */}
       <View style={styles.vitalsHeaderRow}>
-        <Text style={styles.sectionHeading}>Latest Vitals</Text>
-        <TouchableOpacity
-          style={styles.logVitalsButton}
-          onPress={() => router.push('/(tabs)/log-health')}
-          accessibilityLabel="Log new health data"
-        >
-          <Ionicons name="add-circle" size={16} color="#2563eb" style={{ marginRight: 4 }} />
-          <Text style={styles.logVitalsButtonText}>Log Vitals</Text>
-        </TouchableOpacity>
+        <View>
+          <Text style={styles.sectionHeading}>Clinical Vitals</Text>
+          <Text style={styles.sectionSubheading}>
+            {isAdmin ? 'Latest recorded clinical measurements' : 'Monitored health parameters'}
+          </Text>
+        </View>
+        {isAdmin && (
+          <TouchableOpacity
+            style={styles.logVitalsButton}
+            onPress={() => router.push('/(tabs)/log-health' as any)}
+            accessibilityLabel="Log new health data"
+          >
+            <Ionicons name="add-circle" size={16} color="#2563eb" style={{ marginRight: 4 }} />
+            <Text style={styles.logVitalsButtonText}>Log Vitals</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
+      {/* Vitals Cards */}
       {!latestRecord ? (
         <View style={styles.emptyVitalsCard}>
-          <Ionicons name="pulse-outline" size={36} color="#94a3b8" />
-          <Text style={styles.emptyVitalsTitle}>No Health Readings Yet</Text>
+          <Ionicons name="pulse-outline" size={40} color="#94a3b8" />
+          <Text style={styles.emptyVitalsTitle}>No Vitals Recorded Yet</Text>
           <Text style={styles.emptyVitalsText}>
-            Tap "Log Vitals" above to record the 7 clinical vital measurements.
+            {isAdmin
+              ? 'Tap "Log Vitals" above to record the initial vital measurements for this patient.'
+              : 'Your clinical administrator or doctor will record your clinical measurements here.'}
           </Text>
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.emptyLogButton}
+              onPress={() => router.push('/(tabs)/log-health' as any)}
+            >
+              <Text style={styles.emptyLogButtonText}>+ Log First Vitals</Text>
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <View style={styles.vitalsGrid}>
@@ -319,50 +367,95 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerTextCol: { flex: 1 },
-  headerTitle: { fontSize: 28, fontWeight: '700', color: '#0f172a' },
-  headerSubtitle: { fontSize: 14, color: '#64748b', marginTop: 2 },
+  headerTitle: { fontSize: 26, fontWeight: '700', color: '#0f172a' },
+  headerSubtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
   switchPatientChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#eff6ff',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#bfdbfe',
   },
   switchPatientText: { fontSize: 12, fontWeight: '600', color: '#2563eb', marginLeft: 4 },
-  summaryCard: {
+
+  // Profile Card
+  profileCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  summaryHeader: { flexDirection: 'row', alignItems: 'center' },
-  summaryAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#dbeafe',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  summaryAvatarText: { fontSize: 20, fontWeight: '700', color: '#2563eb' },
-  summaryInfo: { flex: 1 },
-  patientName: { fontSize: 17, fontWeight: '700', color: '#0f172a' },
-  patientMeta: { fontSize: 13, color: '#64748b', marginTop: 2 },
-  completeProfilePrompt: {
+  profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
   },
-  completeProfileText: { fontSize: 13, color: '#2563eb', fontWeight: '500', marginLeft: 6 },
+  profileAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  profileAvatarText: { fontSize: 22, fontWeight: '700', color: '#2563eb' },
+  profileHeaderInfo: { flex: 1 },
+  profileName: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
+  profileUsername: { fontSize: 13, color: '#64748b', marginTop: 1 },
+  patientIdBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginTop: 4,
+    gap: 4,
+  },
+  patientIdBadgeText: { fontSize: 11, fontWeight: '700', color: '#1d4ed8' },
+
+  // Demographics Grid
+  demographicsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 12,
+    rowGap: 10,
+  },
+  demographicItem: {
+    width: '50%',
+    paddingRight: 8,
+  },
+  demoLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#94a3b8',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  demoValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginTop: 2,
+  },
+
+  // Status Banner
   overallStatusCard: {
     borderRadius: 12,
     padding: 14,
@@ -372,15 +465,27 @@ const styles = StyleSheet.create({
   overallStatusHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   overallStatusTitle: { fontSize: 15, fontWeight: '700', marginLeft: 8 },
   overallStatusDesc: { fontSize: 12, color: '#64748b', marginLeft: 30 },
+
+  // Vitals
   vitalsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     marginBottom: 12,
   },
-  sectionHeading: { fontSize: 17, fontWeight: '700', color: '#0f172a' },
-  logVitalsButton: { flexDirection: 'row', alignItems: 'center' },
-  logVitalsButtonText: { fontSize: 14, fontWeight: '600', color: '#2563eb' },
+  sectionHeading: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
+  sectionSubheading: { fontSize: 12, color: '#64748b', marginTop: 1 },
+  logVitalsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  logVitalsButtonText: { fontSize: 13, fontWeight: '600', color: '#2563eb' },
   vitalsGrid: { gap: 10 },
   vitalCard: {
     backgroundColor: '#ffffff',
@@ -403,6 +508,8 @@ const styles = StyleSheet.create({
   vitalValue: { fontSize: 24, fontWeight: '700', color: '#0f172a', marginRight: 6 },
   vitalUnit: { fontSize: 14, fontWeight: '500', color: '#64748b' },
   vitalRange: { fontSize: 12, color: '#94a3b8' },
+
+  // Empty state cards
   emptyCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
@@ -456,11 +563,28 @@ const styles = StyleSheet.create({
   emptyVitalsCard: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
-    padding: 24,
+    padding: 28,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
-  emptyVitalsTitle: { fontSize: 16, fontWeight: '600', color: '#334155', marginTop: 8 },
-  emptyVitalsText: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 4 },
+  emptyVitalsTitle: { fontSize: 16, fontWeight: '600', color: '#334155', marginTop: 10 },
+  emptyVitalsText: {
+    fontSize: 13,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 18,
+    maxWidth: 280,
+  },
+  emptyLogButton: {
+    marginTop: 14,
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  emptyLogButtonText: { fontSize: 13, fontWeight: '600', color: '#2563eb' },
 });

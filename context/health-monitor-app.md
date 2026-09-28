@@ -66,6 +66,7 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | **Country Phone Formatting** | `CountryPhoneInput` with Philippines 🇵🇭 default | Country selector dialog formatting calling code + national digits (+63) |
 | **Admin Patient Edit** | `updatePatient` modal in Patients tab | Allows Admins to update patient demographics post-creation |
 | **Admin Avatar Management** | `AvatarPicker` (Camera & Gallery) in Add/Edit Modals | Admin can upload, change, or remove patient profile photos |
+| **Profile & Roster Parity** | Local MyInfo enrichment + auto-sync in `saveLocalMyInfo` & `AppContext` | Eliminates image and name disparity between Patients roster cards and the Dashboard |
 
 ---
 

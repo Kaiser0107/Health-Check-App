@@ -103,6 +103,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMyInfo(localInfo);
       setRecords(localRecs);
 
+      // Keep in-memory patients roster dynamically synchronized with loaded profile
+      if (localInfo) {
+        setPatients((prev) =>
+          prev.map((p) =>
+            p.uid === patientId
+              ? {
+                  ...p,
+                  fullName: localInfo.fullName || p.fullName,
+                  profilePicture:
+                    localInfo.profilePicture !== undefined
+                      ? localInfo.profilePicture
+                      : p.profilePicture,
+                  age: localInfo.age ?? p.age,
+                  sex: localInfo.sex ?? p.sex,
+                  contactNumber: localInfo.contactNumber ?? p.contactNumber,
+                  patientId: localInfo.patientId ?? p.patientId,
+                }
+              : p
+          )
+        );
+      }
+
       // Background cloud sync (non-blocking)
       try {
         const [remoteInfo, remoteRecs] = await Promise.all([
@@ -239,6 +261,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setError(null);
         await saveLocalMyInfo(currentPatientId, info);
         setMyInfo(info);
+
+        // Keep in-memory patients roster dynamically synchronized with updated profile
+        setPatients((prev) =>
+          prev.map((p) =>
+            p.uid === currentPatientId
+              ? {
+                  ...p,
+                  fullName: info.fullName || p.fullName,
+                  profilePicture:
+                    info.profilePicture !== undefined
+                      ? info.profilePicture
+                      : p.profilePicture,
+                  age: info.age ?? p.age,
+                  sex: info.sex ?? p.sex,
+                  contactNumber: info.contactNumber ?? p.contactNumber,
+                  patientId: info.patientId ?? p.patientId,
+                }
+              : p
+          )
+        );
+
         await syncSaveMyInfo(currentPatientId, info);
       } catch (err: any) {
         console.error('[AppContext] Error updating my info:', err);

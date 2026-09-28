@@ -37,6 +37,22 @@ export async function getLocalMyInfo(patientId: string): Promise<MyInfo | null> 
 export async function saveLocalMyInfo(patientId: string, info: MyInfo): Promise<void> {
   try {
     await AsyncStorage.setItem(storageKeys(patientId).MY_INFO, JSON.stringify(info));
+    // Automatically keep the local roster summary in sync with the patient's individual profile
+    const current = await getLocalRoster();
+    const idx = current.findIndex((p) => p.uid === patientId);
+    if (idx >= 0) {
+      const existing = current[idx];
+      current[idx] = {
+        ...existing,
+        fullName: info.fullName || existing.fullName,
+        age: info.age ?? existing.age,
+        sex: info.sex ?? existing.sex,
+        contactNumber: info.contactNumber ?? existing.contactNumber,
+        patientId: info.patientId ?? existing.patientId,
+        profilePicture: info.profilePicture !== undefined ? info.profilePicture : existing.profilePicture,
+      };
+      await AsyncStorage.setItem(ROSTER_KEY, JSON.stringify(current));
+    }
   } catch (err) {
     console.error('[Storage] Error saving my_info:', err);
     throw err;

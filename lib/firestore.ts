@@ -18,7 +18,12 @@ import {
 } from 'firebase/firestore';
 import { db, getDb, isFirebaseConfigured } from './firebase';
 import { HealthRecord, MyInfo, PatientSummary } from '../schemas/health.schema';
-import { getLocalRoster, removeLocalPatientFromRoster } from './storage';
+import {
+  getLocalRoster,
+  getLocalMyInfo,
+  saveLocalPatientToRoster,
+  removeLocalPatientFromRoster,
+} from './storage';
 
 /** Strip undefined values from objects before writing to Firestore to prevent invalid data errors. */
 function cleanFirestoreData<T extends Record<string, any>>(data: T): Record<string, any> {
@@ -111,53 +116,110 @@ export async function syncCreatePatientDoc(uid: string, username: string, info: 
  * If Firebase is configured, fetches from Firestore; otherwise reads from local roster.
  */
 export async function adminGetAllPatients(): Promise<PatientSummary[]> {
-  if (!isFirebaseConfigured) {
-    return getLocalRoster();
-  }
-  try {
-    const firestore = getDb() || db;
-    if (!firestore) return getLocalRoster();
+  const localList = await getLocalRoster();
+  const localMap = new Map(localList.map((lp) => [lp.uid, lp]));
 
-    const snap = await getDocs(collection(firestore, 'patients'));
-    const remoteList = snap.docs.map((d) => {
-      const data = d.data();
-      return {
-        uid: d.id,
-        username: data.username ?? d.id,
-        fullName: data.fullName ?? 'Patient',
-        age: data.age,
-        sex: data.sex,
-        contactNumber: data.contactNumber,
-        patientId: data.patientId,
-        profilePicture: data.profilePicture,
-        createdAt: data.createdAt ?? new Date().toISOString(),
-      };
-    }) as PatientSummary[];
+  let baseList: PatientSummary[] = [];
 
-    // Also merge any locally created or updated patients
-    const localList = await getLocalRoster();
-    const localMap = new Map(localList.map((lp) => [lp.uid, lp]));
-    const merged = remoteList.map((rem) => {
-      const loc = localMap.get(rem.uid);
-      if (!loc) return rem;
-      return {
-        ...rem,
-        ...loc,
-        uid: rem.uid,
-        username: loc.username || rem.username,
-        profilePicture: loc.profilePicture ?? rem.profilePicture,
-      };
-    });
-    for (const lp of localList) {
-      if (!merged.some((m) => m.uid === lp.uid)) {
-        merged.push(lp);
+  if (isFirebaseConfigured) {
+    try {
+      const firestore = getDb() || db;
+      if (firestore) {
+        const snap = await getDocs(collection(firestore, 'patients'));
+        const remoteList = snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            uid: d.id,
+            username: data.username ?? d.id,
+            fullName: data.fullName ?? 'Patient',
+            age: data.age,
+            sex: data.sex,
+            contactNumber: data.contactNumber,
+            patientId: data.patientId,
+            profilePicture: data.profilePicture,
+            createdAt: data.createdAt ?? new Date().toISOString(),
+          };
+        }) as PatientSummary[];
+
+        baseList = [...remoteList];
+        for (const lp of localList) {
+          if (!baseList.some((m) => m.uid === lp.uid)) {
+            baseList.push(lp);
+          }
+        }
+      } else {
+        baseList = [...localList];
       }
+    } catch (err) {
+      console.warn('[Firestore] Fallback to local roster:', err);
+      baseList = [...localList];
     }
-    return merged;
-  } catch (err) {
-    console.warn('[Firestore] Fallback to local roster:', err);
-    return getLocalRoster();
+  } else {
+    baseList = [...localList];
   }
+
+  // ── Critical: Enrich each patient with local individual MyInfo! ──
+  // Local profile (@health_check:${uid}:my_info) is the ultimate source of truth
+  // for the patient's avatar, name, and demographic info.
+  const enrichedList: PatientSummary[] = await Promise.all(
+    baseList.map(async (p) => {
+      try {
+        const myInfo = await getLocalMyInfo(p.uid);
+        const locRoster = localMap.get(p.uid);
+
+        const bestFullName =
+          myInfo?.fullName || locRoster?.fullName || p.fullName;
+        const bestProfilePicture =
+          myInfo?.profilePicture !== undefined
+            ? myInfo.profilePicture
+            : (locRoster?.profilePicture !== undefined
+                ? locRoster.profilePicture
+                : p.profilePicture);
+        const bestAge = myInfo?.age ?? locRoster?.age ?? p.age;
+        const bestSex = myInfo?.sex || locRoster?.sex || p.sex;
+        const bestContact =
+          myInfo?.contactNumber || locRoster?.contactNumber || p.contactNumber;
+        const bestPatientId =
+          myInfo?.patientId || locRoster?.patientId || p.patientId;
+        const bestUsername =
+          p.username || locRoster?.username || p.uid;
+
+        const resolved: PatientSummary = {
+          ...p,
+          username: bestUsername,
+          fullName: bestFullName,
+          profilePicture: bestProfilePicture,
+          age: bestAge,
+          sex: bestSex,
+          contactNumber: bestContact,
+          patientId: bestPatientId,
+        };
+
+        // If local roster had stale data, repair it silently
+        if (
+          locRoster &&
+          (locRoster.profilePicture !== bestProfilePicture ||
+            locRoster.fullName !== bestFullName)
+        ) {
+          saveLocalPatientToRoster({
+            ...locRoster,
+            fullName: bestFullName,
+            profilePicture: bestProfilePicture,
+            age: bestAge,
+            sex: bestSex,
+            contactNumber: bestContact,
+            patientId: bestPatientId,
+          }).catch(() => {});
+        }
+
+        return resolved;
+      } catch {
+        return p;
+      }
+    })
+  );
+
+  return enrichedList;
 }
 
 // ─── Admin: Delete Patient ────────────────────────────────────────────────────

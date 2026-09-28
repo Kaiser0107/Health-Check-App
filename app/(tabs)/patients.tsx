@@ -38,6 +38,7 @@ export default function PatientsScreen() {
   const { isAdmin } = useAuth();
   const {
     patients,
+    myInfo,
     selectPatient,
     createPatient,
     updatePatient,
@@ -282,26 +283,42 @@ export default function PatientsScreen() {
 
   const renderItem = ({ item }: { item: PatientSummary }) => {
     const isSelected = item.uid === currentPatientId;
+    // When this patient is currently selected and active in AppContext,
+    // guarantee 100% dynamic visual parity with the Dashboard by preferring active myInfo
+    const activePhoto =
+      isSelected && myInfo?.profilePicture !== undefined
+        ? myInfo.profilePicture
+        : item.profilePicture;
+    const activeName =
+      isSelected && myInfo?.fullName ? myInfo.fullName : item.fullName;
+    const activeAge =
+      isSelected && myInfo?.age !== undefined ? myInfo.age : item.age;
+    const activeSex =
+      isSelected && myInfo?.sex ? myInfo.sex : item.sex;
+    const activeContact =
+      isSelected && myInfo?.contactNumber ? myInfo.contactNumber : item.contactNumber;
+    const activePatientId =
+      isSelected && myInfo?.patientId ? myInfo.patientId : item.patientId;
 
     return (
       <View style={[styles.patientCard, isSelected && styles.selectedPatientCard]}>
         <TouchableOpacity
           style={styles.patientInfo}
           onPress={() => handleSelectPatient(item)}
-          accessibilityLabel={`Select patient ${item.fullName}`}
+          accessibilityLabel={`Select patient ${activeName}`}
         >
           <View style={[styles.avatar, isSelected && styles.selectedAvatar]}>
-            {item.profilePicture ? (
-              <Image source={{ uri: item.profilePicture }} style={styles.cardAvatarImage} />
+            {activePhoto ? (
+              <Image source={{ uri: activePhoto }} style={styles.cardAvatarImage} />
             ) : (
               <Text style={[styles.avatarText, isSelected && styles.selectedAvatarText]}>
-                {item.fullName.charAt(0).toUpperCase()}
+                {activeName.charAt(0).toUpperCase()}
               </Text>
             )}
           </View>
           <View style={styles.patientDetails}>
             <View style={styles.nameRow}>
-              <Text style={styles.patientName}>{item.fullName}</Text>
+              <Text style={styles.patientName}>{activeName}</Text>
               {isSelected && (
                 <View style={styles.activeTag}>
                   <Text style={styles.activeTagText}>ACTIVE</Text>
@@ -310,14 +327,14 @@ export default function PatientsScreen() {
             </View>
             <Text style={styles.patientUsername}>@{item.username}</Text>
             <View style={styles.patientMetaRow}>
-              {item.age ? <Text style={styles.patientMetaText}>{item.age} yrs</Text> : null}
-              {item.sex ? <Text style={styles.patientMetaText}> · {item.sex}</Text> : null}
-              {item.contactNumber ? (
-                <Text style={styles.patientMetaText}> · {item.contactNumber}</Text>
+              {activeAge ? <Text style={styles.patientMetaText}>{activeAge} yrs</Text> : null}
+              {activeSex ? <Text style={styles.patientMetaText}> · {activeSex}</Text> : null}
+              {activeContact ? (
+                <Text style={styles.patientMetaText}> · {activeContact}</Text>
               ) : null}
             </View>
-            {item.patientId ? (
-              <Text style={styles.patientId}>ID: {item.patientId}</Text>
+            {activePatientId ? (
+              <Text style={styles.patientId}>ID: {activePatientId}</Text>
             ) : null}
           </View>
         </TouchableOpacity>
@@ -832,6 +849,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderWidth: 1,
     borderColor: '#bfdbfe',
+    overflow: 'hidden',
   },
   selectedAvatar: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
   avatarText: { fontSize: 18, fontWeight: '700', color: '#2563eb' },

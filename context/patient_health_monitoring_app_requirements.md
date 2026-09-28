@@ -254,3 +254,6 @@ The system supports exactly two roles:
    - Only Admins can modify existing patient accounts from the Edit Patient modal in the Patients tab.
    - Admins can update the patient's username (with uniqueness checks) and reset/change the patient's password (min 6 characters, or leave blank to keep unchanged).
    - Credential updates execute seamlessly through an ephemeral secondary Firebase Auth session and synchronize with Firestore `users/{uid}` and `patients/{uid}` without interrupting the active Admin login session.
+4. **Unified Profile & Dynamic Roster Synchronization**:
+   - Any profile modifications (demographics, contact number, avatar photo, username) synchronize bidirectionally across the individual profile storage, the local roster cache, and the active session state.
+   - The Patients roster card and the Health Dashboard maintain 100% visual parity for avatars, names, and patient metadata.

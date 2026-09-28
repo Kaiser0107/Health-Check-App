@@ -671,3 +671,28 @@ service cloud.firestore {
 - [x] Secondary Firebase App pattern handles credential updates without disrupting Admin login session
 - [x] Local-first architecture guarantees offline and network-resilient behavior
 
+---
+
+## Milestone 16 — Roster Card & Dashboard Dynamic Image & Profile Parity
+
+> **Goal:** Resolve profile photo and name disparity between the Patients Roster card and the Health Dashboard by establishing bidirectional local-first synchronization and real-time state propagation.
+
+### Work Completed
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 16.1 | Update `saveLocalMyInfo` to automatically keep the local roster summary (`@health_check:all_patients_roster`) synchronized whenever a patient's individual profile (`@health_check:${patientId}:my_info`) is saved | `lib/storage.ts` | ✅ |
+| 16.2 | Upgrade `adminGetAllPatients` to enrich all base patient items with their actual individual `getLocalMyInfo(uid)` record and auto-repair any stale roster entries | `lib/firestore.ts` | ✅ |
+| 16.3 | Update `loadPatientData` in `AppContext.tsx` to dynamically sync freshly loaded `localInfo` directly into the in-memory `patients` state | `context/AppContext.tsx` | ✅ |
+| 16.4 | Update `updateMyInfo` in `AppContext.tsx` to propagate demographic profile and photo changes to `patients` state in real-time | `context/AppContext.tsx` | ✅ |
+| 16.5 | Add active patient fallback in `renderItem` (`app/(tabs)/patients.tsx`) so the active patient card immediately matches `myInfo` from the Dashboard | `app/(tabs)/patients.tsx` | ✅ |
+| 16.6 | Add `overflow: 'hidden'` to avatar circle container to ensure proper circular clipping across platforms | `app/(tabs)/patients.tsx` | ✅ |
+| 16.7 | Update context documentation and AST graph | `context/*` | ✅ |
+
+### Verify Before Closing Milestone
+- [x] `npx tsc --noEmit` — 0 errors ✅
+- [x] Patient profile photo on the Patients roster card matches the Dashboard profile photo exactly
+- [x] Patient full name on the Patients roster card matches the Dashboard full name exactly
+- [x] Changes saved to a patient profile propagate to both the Patients roster card and the Dashboard without requiring an app reload
+
+

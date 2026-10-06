@@ -305,6 +305,17 @@ export default function DashboardScreen() {
             rangeText="70-99 mg/dL"
             icon="flask-outline"
           />
+
+          {/* View Full History Shortcut */}
+          <TouchableOpacity
+            style={styles.viewHistoryButton}
+            onPress={() => router.push('/(tabs)/history' as any)}
+            accessibilityLabel="View complete health record history"
+          >
+            <Ionicons name="time-outline" size={18} color="#2563eb" style={{ marginRight: 8 }} />
+            <Text style={styles.viewHistoryButtonText}>View Complete Health History</Text>
+            <Ionicons name="chevron-forward" size={16} color="#2563eb" style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
         </View>
       )}
     </ScrollView>
@@ -597,4 +608,20 @@ const styles = StyleSheet.create({
     borderColor: '#bfdbfe',
   },
   emptyLogButtonText: { fontSize: 13, fontWeight: '600', color: '#2563eb' },
+  viewHistoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eff6ff',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  viewHistoryButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2563eb',
+  },
 });

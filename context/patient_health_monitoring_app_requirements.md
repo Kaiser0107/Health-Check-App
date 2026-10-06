@@ -215,7 +215,7 @@ The system supports exactly two roles:
 
 | Feature / Capability | Admin (`ADMIN_USERNAMES`) | User / Patient Account | Rationale / Limitation |
 |---|---|---|---|
-| **Visible Tabs** | Dashboard, Patients, Log Health, History, Settings | **Dashboard & Settings ONLY** | Patient has a focused, view-only monitoring experience |
+| **Visible Tabs** | Dashboard, Patients, Log Health, History, Settings | **Dashboard, History, Settings** | Patient views own dashboard and longitudinal history |
 | **Patients Management Tab** | ✅ Full Access (Add/Delete/Select) | ❌ **Hidden (`href: null`)** | Only admins manage clinical patient accounts |
 | **Add Patient / User Account** | ✅ Yes (Modal in Patients tab) | ❌ **Blocked (No public register)** | Admin provisions credentials + demographics simultaneously |
 | **Delete Patient Account & Records** | ✅ Yes (Cascade delete) | ❌ **Blocked** | Patients cannot delete accounts or audit records |
@@ -223,7 +223,7 @@ The system supports exactly two roles:
 | **Personal Health Dashboard** | Shown for selected patient | ✅ **Self-only** | Patient lands directly on Dashboard with personal vitals |
 | **Select Active Patient** | ✅ From roster list | ❌ **Locked to `user.uid`** | Patient cannot switch contexts or view others |
 | **Log Health Vitals** | ✅ For any selected patient | ❌ **Admin-only** (`href: null`) | Attending clinical staff records vitals; prevents false entries |
-| **View Health History Tab** | ✅ For any selected patient | ❌ **Admin-only** (`href: null`) | Deep longitudinal history managed by clinical personnel |
+| **View Health History Tab** | ✅ For any selected patient | ✅ **Self-only (`user.uid`)** | Patient reviews personal past records and vital breakdown |
 | **Settings (Sign Out)** | ✅ Yes | ✅ **Yes** | Both roles can sign out back to Drop Logo → Login screen |
 
 ### User / Patient Account Limitations

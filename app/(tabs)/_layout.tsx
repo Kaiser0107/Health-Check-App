@@ -93,14 +93,13 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ─── History — admin only ───────────────────────────────────────── */}
+      {/* ─── History — both roles (Patient sees own records, Admin views selected patient) ─── */}
       <Tabs.Screen
         name="history"
         options={{
           title: 'History',
-          href: isAdmin ? undefined : null, // admin only
           tabBarIcon: ({ focused, color, size }) => (
-            <TabIcon name="bar-chart" focused={focused} color={color} size={size} />
+            <TabIcon name="time" focused={focused} color={color} size={size} />
           ),
         }}
       />

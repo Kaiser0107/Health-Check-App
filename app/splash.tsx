@@ -4,7 +4,7 @@
  * automatically to the Login screen.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Easing, StyleSheet, Platform } from 'react-native';
+import { View, Text, Animated, Easing, StyleSheet, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 
 export default function SplashScreen() {
@@ -62,7 +62,12 @@ export default function SplashScreen() {
         ]}
       >
         <View style={styles.logoBubble}>
-          <Text style={styles.logoEmoji}>💊</Text>
+          <Image
+            source={require('../assets/images/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+            accessibilityLabel="Health Check App Logo"
+          />
         </View>
         <Text style={styles.appName}>Health Check</Text>
         <Text style={styles.tagline}>Your health, at a glance.</Text>
@@ -80,10 +85,10 @@ const styles = StyleSheet.create({
   },
   logoContainer: { alignItems: 'center' },
   logoBubble: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#dbeafe',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -93,7 +98,11 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-  logoEmoji: { fontSize: 48 },
+  logoImage: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+  },
   appName: {
     fontSize: 32,
     fontWeight: '800',

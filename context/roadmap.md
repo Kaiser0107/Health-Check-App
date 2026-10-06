@@ -42,8 +42,9 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | **13** | **QoL Form Controls** | **Calendar date picker, Country phone selector (PH +63 default), Admin patient edit** | ✅ Done |
 | 5 | Dashboard Screen | Role-aware: Patient (own vitals) vs Admin (selected patient overview) | ✅ Done |
 | 7 | Settings Screen | Account profile, Role badge, Firebase Sign Out, Clear data | ✅ Done |
-| 6 | History Screen | Role-aware: List past records per patient with timestamps | ⬜ Next Up |
-| 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ⬜ Not Started |
+| **6** | **History Screen** | **Role-aware: List past records per patient with timestamps & vitals breakdown** | ✅ Done |
+| **17** | **Branded Logo & Records History** | **Custom image logo for Splash/Login, dedicated History screen with expandable cards & trends** | ✅ Done |
+| 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ⬜ Next Up |
 
 **Status key:** ⬜ Not Started · 🔄 In Progress · ✅ Done · 🚫 Blocked
 
@@ -694,5 +695,33 @@ service cloud.firestore {
 - [x] Patient profile photo on the Patients roster card matches the Dashboard profile photo exactly
 - [x] Patient full name on the Patients roster card matches the Dashboard full name exactly
 - [x] Changes saved to a patient profile propagate to both the Patients roster card and the Dashboard without requiring an app reload
+
+---
+
+## Milestone 17 — Branded Splash Screen Logo, Dedicated Health History & Records Screen
+
+> **Goal:** Upgrade the splash screen and login header with a custom branded image logo, implement the dedicated Health History screen with chronological record cards and vitals breakdown, and establish seamless history navigation across Patient and Admin roles.
+
+### Work Completed
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 17.1 | Create high-resolution branded medical logo in `assets/images/logo.png` with clinical blue palette | `assets/images/logo.png` | ✅ |
+| 17.2 | Update `app/splash.tsx` to render the branded logo image during the drop-and-bounce launch animation | `app/splash.tsx` | ✅ |
+| 17.3 | Update `app/login.tsx` header circle to display the cohesive branded logo image | `app/login.tsx` | ✅ |
+| 17.4 | Build `components/history/RecordCard.tsx` with expandable full vitals breakdown, timestamps, status badge, threshold ranges, and Admin delete action | `components/history/RecordCard.tsx` | ✅ |
+| 17.5 | Build complete `app/(tabs)/history.tsx` screen with active patient banner, trend summary bar, pull-to-refresh, chronological records list, and empty state | `app/(tabs)/history.tsx` | ✅ |
+| 17.6 | Update `app/(tabs)/_layout.tsx` to enable the History tab for both Patient (view own records) and Admin (view selected patient) | `app/(tabs)/_layout.tsx` | ✅ |
+| 17.7 | Add "View Complete Health History" direct navigation shortcut on the Health Dashboard | `app/(tabs)/index.tsx` | ✅ |
+| 17.8 | Update context documentation and verify bundling passes with 0 errors | `context/*` | ✅ |
+
+### Verify Before Closing Milestone
+- [x] `npx tsc --noEmit` — 0 errors ✅
+- [x] `npx expo export --platform web` — builds and bundles static routes cleanly ✅
+- [x] Splash screen plays drop animation with branded medical logo image
+- [x] Login screen renders cohesive branded logo in header
+- [x] Patient can view all historical records on History tab and from Dashboard shortcut
+- [x] Admin can view selected patient's full records history, switch patients, or delete records
+- [x] No purple or violet hex codes; 100% compliant with clinical palette
 
 

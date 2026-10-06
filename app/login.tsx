@@ -19,6 +19,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
@@ -84,7 +85,12 @@ export default function LoginScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoIcon}>🩺</Text>
+            <Image
+              source={require('../assets/images/logo.png')}
+              style={{ width: 68, height: 68, borderRadius: 34 }}
+              resizeMode="contain"
+              accessibilityLabel="Health Check Logo"
+            />
           </View>
           <Text style={styles.appTitle}>Health Check App</Text>
           <Text style={styles.tagline}>

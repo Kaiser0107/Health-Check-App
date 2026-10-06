@@ -67,6 +67,8 @@ Bootstrap & Schemas  →  Data Layer (Storage & Context)  →  Forms & Screens
 | **Admin Patient Edit** | `updatePatient` modal in Patients tab | Allows Admins to update patient demographics post-creation |
 | **Admin Avatar Management** | `AvatarPicker` (Camera & Gallery) in Add/Edit Modals | Admin can upload, change, or remove patient profile photos |
 | **Profile & Roster Parity** | Local MyInfo enrichment + auto-sync in `saveLocalMyInfo` & `AppContext` | Eliminates image and name disparity between Patients roster cards and the Dashboard |
+| **Branded App Logo** | Custom high-res PNG logo (`assets/images/logo.png`) | Replaces emoji with clinical branded emblem on Splash and Login |
+| **Health History & Records** | `RecordCard` + `app/(tabs)/history.tsx` | Chronological records list with full vitals breakdown, trend averages, and patient scoping |
 
 ---
 

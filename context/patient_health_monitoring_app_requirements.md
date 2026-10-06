@@ -50,7 +50,6 @@ App Launch / Reload / Sign Out
 - Actions: **Sign In** only (public registration is disabled to enforce clinical authority)
 - **Role-based initial landing**: Admins land on the **Patients** tab; Patients land on the **Dashboard**
 - On failed sign-in → shows inline error message (no native Alert)
-- Quick-demo autofill buttons provided for fast role testing (`admin`, `patient1`)
 - Implemented as a dedicated screen: `app/login.tsx`
 
 ---
@@ -158,7 +157,7 @@ Component-based structure with the following screens:
   * Auto-transitions to Login (or Main App if already signed in)
 * **Login Screen** (Authentication — `app/login.tsx`)
   * Username + Password fields (no real email required)
-  * Sign In, Create Account (with quick-demo autofill buttons for admin and patient)
+  * Sign In only (public registration disabled; accounts provisioned by Admin)
   * Firebase Auth backing via internal virtual domain (`@healthcheck.local`) + hardcoded role resolution
 * **Dashboard** (`app/(tabs)/index.tsx`)
   * **Patient Role**: Displays own summary (ID, Name, Age, Sex), overall status badge, and 7 vital cards

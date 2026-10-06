@@ -156,37 +156,6 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {/* Quick Demo Autofill Chips */}
-        <View style={styles.demoSection}>
-          <Text style={styles.demoLabel}>Demo Quick-Fill:</Text>
-          <View style={styles.demoButtonsCol}>
-            <TouchableOpacity
-              style={[styles.demoChip, styles.adminDemoChip]}
-              onPress={() => {
-                setUsername('admin');
-                setPassword('admin123');
-                if (localError) setLocalError(null);
-                if (authError) clearAuthError();
-              }}
-              accessibilityLabel="Autofill Admin account"
-            >
-              <Text style={styles.adminDemoChipText}>🛡️ Admin (admin / admin123)</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.demoChip, styles.patientDemoChip]}
-              onPress={() => {
-                setUsername('patient1');
-                setPassword('patient123');
-                if (localError) setLocalError(null);
-                if (authError) clearAuthError();
-              }}
-              accessibilityLabel="Autofill Patient account"
-            >
-              <Text style={styles.patientDemoChipText}>👤 Patient 1 (patient1 / patient123)</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -272,31 +241,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  demoSection: {
-    marginTop: 8,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    alignItems: 'center',
-  },
-  demoLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
-    marginBottom: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  demoButtonsCol: { width: '100%', gap: 8 },
-  demoChip: {
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  adminDemoChip: { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' },
-  patientDemoChip: { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
-  adminDemoChipText: { fontSize: 13, fontWeight: '600', color: '#1d4ed8' },
-  patientDemoChipText: { fontSize: 13, fontWeight: '600', color: '#15803d' },
 });

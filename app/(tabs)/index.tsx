@@ -14,6 +14,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { getOverallHealthStatus, getVitalStatus, VITAL_CONFIGS } from '../../constants/thresholds';
 import { VitalStatus } from '../../schemas/health.schema';
+import { theme, clayStyles } from '../../constants/theme';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -25,18 +26,33 @@ export default function DashboardScreen() {
   const getStatusColor = (status: VitalStatus) => {
     switch (status) {
       case 'critical':
-        return { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' };
+        return {
+          bg: '#fef2f2',
+          borderTop: '#ffffff',
+          borderDepth: '#fca5a5',
+          text: '#dc2626',
+        };
       case 'warning':
-        return { bg: '#fffbeb', border: '#fde68a', text: '#d97706' };
+        return {
+          bg: '#fffbeb',
+          borderTop: '#ffffff',
+          borderDepth: '#fde68a',
+          text: '#d97706',
+        };
       default:
-        return { bg: '#f0fdf4', border: '#bbf7d0', text: '#16a34a' };
+        return {
+          bg: '#f0fdf4',
+          borderTop: '#ffffff',
+          borderDepth: '#bbf7d0',
+          text: '#16a34a',
+        };
     }
   };
 
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Loading health dashboard...</Text>
       </View>
     );
@@ -51,18 +67,19 @@ export default function DashboardScreen() {
           <Text style={styles.headerSubtitle}>System Overview & Patient Roster</Text>
         </View>
 
-        <View style={styles.emptyCard}>
+        <View style={styles.emptyClayCard}>
           <View style={styles.emptyIconCircle}>
-            <Ionicons name="people-outline" size={40} color="#2563eb" />
+            <Ionicons name="people" size={38} color="#2563eb" />
           </View>
           <Text style={styles.emptyCardTitle}>No Patient Selected</Text>
           <Text style={styles.emptyCardText}>
-            Select a patient from the roster to monitor their vital measurements and health status.
+            Select a patient from the clinical roster to monitor their vital measurements and health status.
           </Text>
 
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => router.push('/(tabs)/patients' as any)}
+            activeOpacity={0.8}
             accessibilityLabel="View Patients Roster"
           >
             <Ionicons name="list-outline" size={18} color="#ffffff" style={styles.buttonIcon} />
@@ -70,13 +87,13 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Quick Stats Grid */}
+        {/* Quick Stats Grid with Clay Tiles */}
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
+          <View style={styles.statClayBox}>
             <Text style={styles.statNumber}>{patients.length}</Text>
             <Text style={styles.statLabel}>Registered Patients</Text>
           </View>
-          <View style={styles.statBox}>
+          <View style={styles.statClayBox}>
             <Text style={[styles.statNumber, { color: '#16a34a' }]}>Active</Text>
             <Text style={styles.statLabel}>System Status</Text>
           </View>
@@ -111,6 +128,7 @@ export default function DashboardScreen() {
           <TouchableOpacity
             style={styles.switchPatientChip}
             onPress={() => router.push('/(tabs)/patients' as any)}
+            activeOpacity={0.8}
             accessibilityLabel="Switch active patient"
           >
             <Ionicons name="swap-horizontal" size={14} color="#2563eb" />
@@ -119,9 +137,10 @@ export default function DashboardScreen() {
         )}
       </View>
 
-      {/* Comprehensive Patient Demographic Profile Card */}
-      <View style={styles.profileCard}>
+      {/* Comprehensive Patient Demographic Profile Clay Card */}
+      <View style={styles.profileClayCard}>
         <View style={styles.profileHeader}>
+          {/* 3D Inflated Avatar Ring */}
           <View style={styles.profileAvatar}>
             {myInfo?.profilePicture ? (
               <Image source={{ uri: myInfo.profilePicture }} style={styles.profileAvatarImage} />
@@ -143,7 +162,7 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Demographic Details Grid */}
+        {/* Demographic Details Grid with Sunken Soft Tiles */}
         <View style={styles.demographicsGrid}>
           <View style={styles.demographicItem}>
             <Text style={styles.demoLabel}>AGE / SEX</Text>
@@ -175,11 +194,17 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      {/* Overall Health Status Banner */}
+      {/* Overall Health Status Clay Capsule */}
       <View
         style={[
           styles.overallStatusCard,
-          { backgroundColor: statusColors.bg, borderColor: statusColors.border },
+          {
+            backgroundColor: statusColors.bg,
+            borderTopColor: statusColors.borderTop,
+            borderLeftColor: statusColors.borderTop,
+            borderRightColor: statusColors.borderDepth,
+            borderBottomColor: statusColors.borderDepth,
+          },
         ]}
       >
         <View style={styles.overallStatusHeader}>
@@ -217,6 +242,7 @@ export default function DashboardScreen() {
           <TouchableOpacity
             style={styles.logVitalsButton}
             onPress={() => router.push('/(tabs)/log-health' as any)}
+            activeOpacity={0.8}
             accessibilityLabel="Log new health data"
           >
             <Ionicons name="add-circle" size={16} color="#2563eb" style={{ marginRight: 4 }} />
@@ -228,7 +254,7 @@ export default function DashboardScreen() {
       {/* Vitals Cards */}
       {!latestRecord ? (
         <View style={styles.emptyVitalsCard}>
-          <Ionicons name="pulse-outline" size={40} color="#94a3b8" />
+          <Ionicons name="pulse" size={44} color="#94a3b8" />
           <Text style={styles.emptyVitalsTitle}>No Vitals Recorded Yet</Text>
           <Text style={styles.emptyVitalsText}>
             {isAdmin
@@ -239,6 +265,7 @@ export default function DashboardScreen() {
             <TouchableOpacity
               style={styles.emptyLogButton}
               onPress={() => router.push('/(tabs)/log-health' as any)}
+              activeOpacity={0.8}
             >
               <Text style={styles.emptyLogButtonText}>+ Log First Vitals</Text>
             </TouchableOpacity>
@@ -253,7 +280,7 @@ export default function DashboardScreen() {
             unit="BPM"
             status={getVitalStatus('heartRate', latestRecord.heartRate)}
             rangeText={VITAL_CONFIGS.heartRate.normalRangeText}
-            icon="heart-outline"
+            icon="heart"
           />
 
           {/* Blood Pressure */}
@@ -263,7 +290,7 @@ export default function DashboardScreen() {
             unit="mmHg"
             status={getVitalStatus('systolic', latestRecord.systolic)}
             rangeText="90-120 / 60-80"
-            icon="speedometer-outline"
+            icon="speedometer"
           />
 
           {/* Temperature */}
@@ -273,7 +300,7 @@ export default function DashboardScreen() {
             unit="°C"
             status={getVitalStatus('temperature', latestRecord.temperature)}
             rangeText={VITAL_CONFIGS.temperature.normalRangeText}
-            icon="thermometer-outline"
+            icon="thermometer"
           />
 
           {/* Oxygen Level */}
@@ -283,7 +310,7 @@ export default function DashboardScreen() {
             unit="%"
             status={getVitalStatus('oxygenLevel', latestRecord.oxygenLevel)}
             rangeText={VITAL_CONFIGS.oxygenLevel.normalRangeText}
-            icon="water-outline"
+            icon="water"
           />
 
           {/* BMI */}
@@ -293,7 +320,7 @@ export default function DashboardScreen() {
             unit={latestRecord.bmiCategory}
             status={getVitalStatus('bmi', latestRecord.bmi)}
             rangeText={VITAL_CONFIGS.bmi.normalRangeText}
-            icon="fitness-outline"
+            icon="fitness"
           />
 
           {/* Blood Sugar */}
@@ -303,16 +330,17 @@ export default function DashboardScreen() {
             unit={`mg/dL (${latestRecord.bloodSugarType})`}
             status={getVitalStatus('bloodSugar', latestRecord.bloodSugar, latestRecord.bloodSugarType)}
             rangeText="70-99 mg/dL"
-            icon="flask-outline"
+            icon="flask"
           />
 
-          {/* View Full History Shortcut */}
+          {/* View Full History Shortcut Button */}
           <TouchableOpacity
             style={styles.viewHistoryButton}
             onPress={() => router.push('/(tabs)/history' as any)}
+            activeOpacity={0.8}
             accessibilityLabel="View complete health record history"
           >
-            <Ionicons name="time-outline" size={18} color="#2563eb" style={{ marginRight: 8 }} />
+            <Ionicons name="time" size={18} color="#2563eb" style={{ marginRight: 8 }} />
             <Text style={styles.viewHistoryButtonText}>View Complete Health History</Text>
             <Ionicons name="chevron-forward" size={16} color="#2563eb" style={{ marginLeft: 6 }} />
           </TouchableOpacity>
@@ -335,11 +363,11 @@ function VitalCard({ title, value, unit, status, rangeText, icon }: VitalCardPro
   const getBadgeStyle = (st: VitalStatus) => {
     switch (st) {
       case 'critical':
-        return { bg: '#fef2f2', text: '#dc2626' };
+        return { bg: '#fef2f2', borderDepth: '#fca5a5', text: '#dc2626' };
       case 'warning':
-        return { bg: '#fffbeb', text: '#d97706' };
+        return { bg: '#fffbeb', borderDepth: '#fde68a', text: '#d97706' };
       default:
-        return { bg: '#f0fdf4', text: '#16a34a' };
+        return { bg: '#f0fdf4', borderDepth: '#bbf7d0', text: '#16a34a' };
     }
   };
   const badge = getBadgeStyle(status);
@@ -348,10 +376,21 @@ function VitalCard({ title, value, unit, status, rangeText, icon }: VitalCardPro
     <View style={styles.vitalCard}>
       <View style={styles.vitalCardHeader}>
         <View style={styles.vitalCardTitleRow}>
-          <Ionicons name={icon} size={16} color="#64748b" style={{ marginRight: 6 }} />
+          <View style={styles.vitalIconBubble}>
+            <Ionicons name={icon} size={15} color="#2563eb" />
+          </View>
           <Text style={styles.vitalCardTitle}>{title}</Text>
         </View>
-        <View style={[styles.statusPill, { backgroundColor: badge.bg }]}>
+        <View
+          style={[
+            styles.statusPill,
+            {
+              backgroundColor: badge.bg,
+              borderBottomColor: badge.borderDepth,
+              borderRightColor: badge.borderDepth,
+            },
+          ]}
+        >
           <Text style={[styles.statusPillText, { color: badge.text }]}>
             {status.toUpperCase()}
           </Text>
@@ -367,15 +406,15 @@ function VitalCard({ title, value, unit, status, rangeText, icon }: VitalCardPro
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.background,
   },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#64748b' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#64748b', fontWeight: '500' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -383,33 +422,35 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerTextCol: { flex: 1 },
-  headerTitle: { fontSize: 26, fontWeight: '700', color: '#0f172a' },
-  headerSubtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
+  headerTitle: { fontSize: 26, fontWeight: '800', color: '#0f172a', letterSpacing: -0.3 },
+  headerSubtitle: { fontSize: 13, color: '#64748b', marginTop: 2, fontWeight: '500' },
   switchPatientChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#eff6ff',
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    paddingVertical: 8,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2,
+    borderBottomWidth: 3,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  switchPatientText: { fontSize: 12, fontWeight: '600', color: '#2563eb', marginLeft: 4 },
+  switchPatientText: { fontSize: 12, fontWeight: '700', color: '#2563eb', marginLeft: 4 },
 
-  // Profile Card
-  profileCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 18,
+  // Profile Clay Card
+  profileClayCard: {
+    ...clayStyles.card,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -419,39 +460,59 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f1f5f9',
   },
   profileAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderTopWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 3,
+    borderBottomWidth: 4,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+    overflow: 'hidden',
   },
-  profileAvatarText: { fontSize: 22, fontWeight: '700', color: '#2563eb' },
+  profileAvatarText: { fontSize: 24, fontWeight: '800', color: '#2563eb' },
   profileAvatarImage: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
   },
   profileHeaderInfo: { flex: 1 },
-  profileName: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
-  profileUsername: { fontSize: 13, color: '#64748b', marginTop: 1 },
+  profileName: { fontSize: 19, fontWeight: '800', color: '#0f172a' },
+  profileUsername: { fontSize: 13, color: '#64748b', marginTop: 1, fontWeight: '500' },
   patientIdBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#eff6ff',
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 3,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
     marginTop: 4,
     gap: 4,
   },
   patientIdBadgeText: { fontSize: 11, fontWeight: '700', color: '#1d4ed8' },
 
-  // Demographics Grid
+  // Demographics Grid with Clay Inset Cells
   demographicsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -464,164 +525,225 @@ const styles = StyleSheet.create({
   },
   demoLabel: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#94a3b8',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   demoValue: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1e293b',
     marginTop: 2,
   },
 
-  // Status Banner
+  // Status Banner (Clay Capsule)
   overallStatusCard: {
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: theme.radius.md,
+    padding: 16,
     marginBottom: 16,
-    borderWidth: 1,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderRightWidth: 2.5,
+    borderBottomWidth: 3.5,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   overallStatusHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  overallStatusTitle: { fontSize: 15, fontWeight: '700', marginLeft: 8 },
-  overallStatusDesc: { fontSize: 12, color: '#64748b', marginLeft: 30 },
+  overallStatusTitle: { fontSize: 15, fontWeight: '800', marginLeft: 8 },
+  overallStatusDesc: { fontSize: 12, color: '#64748b', marginLeft: 30, lineHeight: 18, fontWeight: '500' },
 
-  // Vitals
+  // Vitals Header
   vitalsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     marginBottom: 12,
   },
-  sectionHeading: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
-  sectionSubheading: { fontSize: 12, color: '#64748b', marginTop: 1 },
+  sectionHeading: { fontSize: 19, fontWeight: '800', color: '#0f172a' },
+  sectionSubheading: { fontSize: 12, color: '#64748b', marginTop: 1, fontWeight: '500' },
   logVitalsButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#eff6ff',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2,
+    borderBottomWidth: 3,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  logVitalsButtonText: { fontSize: 13, fontWeight: '600', color: '#2563eb' },
-  vitalsGrid: { gap: 10 },
+  logVitalsButtonText: { fontSize: 13, fontWeight: '700', color: '#2563eb' },
+  vitalsGrid: { gap: 12 },
+
+  // 3D Clay Vital Card
   vitalCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderRadius: theme.radius.lg,
+    padding: 16,
+    borderTopWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2.5,
+    borderBottomWidth: 4,
+    borderRightColor: '#dbeafe',
+    borderBottomColor: '#bfdbfe',
+    shadowColor: '#1d4ed8',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
   },
   vitalCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   vitalCardTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  vitalCardTitle: { fontSize: 14, fontWeight: '600', color: '#334155' },
-  statusPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  statusPillText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
-  vitalValueRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 },
-  vitalValue: { fontSize: 24, fontWeight: '700', color: '#0f172a', marginRight: 6 },
-  vitalUnit: { fontSize: 14, fontWeight: '500', color: '#64748b' },
-  vitalRange: { fontSize: 12, color: '#94a3b8' },
-
-  // Empty state cards
-  emptyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
+  vitalIconBubble: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    marginRight: 8,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
+  },
+  vitalCardTitle: { fontSize: 14, fontWeight: '700', color: '#334155' },
+  statusPill: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2,
+  },
+  statusPillText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  vitalValueRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 },
+  vitalValue: { fontSize: 26, fontWeight: '800', color: '#0f172a', marginRight: 6 },
+  vitalUnit: { fontSize: 14, fontWeight: '600', color: '#64748b' },
+  vitalRange: { fontSize: 12, color: '#94a3b8', fontWeight: '500' },
+
+  // Empty State Clay Cards
+  emptyClayCard: {
+    ...clayStyles.card,
+    alignItems: 'center',
+    padding: 26,
     marginBottom: 20,
   },
   emptyIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    borderTopWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 3,
+    borderBottomWidth: 4,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  emptyCardTitle: { fontSize: 20, fontWeight: '700', color: '#0f172a', marginBottom: 6 },
+  emptyCardTitle: { fontSize: 20, fontWeight: '800', color: '#0f172a', marginBottom: 6 },
   emptyCardText: {
     fontSize: 14,
     color: '#64748b',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 20,
+    fontWeight: '500',
   },
   primaryButton: {
+    ...clayStyles.buttonPrimary,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
     width: '100%',
   },
   buttonIcon: { marginRight: 8 },
-  primaryButtonText: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
+  primaryButtonText: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
   statsRow: { flexDirection: 'row', gap: 12 },
-  statBox: {
+  statClayBox: {
+    ...clayStyles.cardCompact,
     flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
     alignItems: 'center',
+    paddingVertical: 18,
   },
-  statNumber: { fontSize: 28, fontWeight: '800', color: '#0f172a' },
-  statLabel: { fontSize: 12, color: '#64748b', marginTop: 4 },
+  statNumber: { fontSize: 30, fontWeight: '900', color: '#0f172a' },
+  statLabel: { fontSize: 12, color: '#64748b', marginTop: 4, fontWeight: '600' },
   emptyVitalsCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 28,
+    ...clayStyles.card,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    padding: 30,
   },
-  emptyVitalsTitle: { fontSize: 16, fontWeight: '600', color: '#334155', marginTop: 10 },
+  emptyVitalsTitle: { fontSize: 17, fontWeight: '700', color: '#334155', marginTop: 12 },
   emptyVitalsText: {
     fontSize: 13,
     color: '#94a3b8',
     textAlign: 'center',
     marginTop: 6,
-    lineHeight: 18,
+    lineHeight: 19,
     maxWidth: 280,
+    fontWeight: '500',
   },
   emptyLogButton: {
-    marginTop: 14,
+    marginTop: 16,
     backgroundColor: '#eff6ff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2,
+    borderBottomWidth: 3,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
   },
-  emptyLogButtonText: { fontSize: 13, fontWeight: '600', color: '#2563eb' },
+  emptyLogButtonText: { fontSize: 13, fontWeight: '700', color: '#2563eb' },
   viewHistoryButton: {
+    ...clayStyles.buttonSecondary,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    paddingVertical: 14,
     marginTop: 6,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    paddingVertical: 15,
   },
   viewHistoryButtonText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#2563eb',
   },
 });

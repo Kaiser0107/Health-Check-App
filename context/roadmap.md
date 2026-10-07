@@ -43,8 +43,8 @@ Milestone 1 → Milestone 2 → Milestone 3 → ... → Milestone 8
 | 5 | Dashboard Screen | Role-aware: Patient (own vitals) vs Admin (selected patient overview) | ✅ Done |
 | 7 | Settings Screen | Account profile, Role badge, Firebase Sign Out, Clear data | ✅ Done |
 | **6** | **History Screen** | **Role-aware: List past records per patient with timestamps & vitals breakdown** | ✅ Done |
-| **17** | **Branded Logo & Records History** | **Custom image logo for Splash/Login, dedicated History screen with expandable cards & trends** | ✅ Done |
-| 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ⬜ Next Up |
+| 8 | Design & Charts | StyleSheet styles — VitalLineChart — navigation polish | ✅ Done |
+| **18** | **Claymorphism UI Redesign** | **Tactile Soft 3D Pillowy UI: Splash, Login, Dashboard, History, Patients, Log Health, Settings** | ✅ Done |
 
 **Status key:** ⬜ Not Started · 🔄 In Progress · ✅ Done · 🚫 Blocked
 
@@ -723,5 +723,33 @@ service cloud.firestore {
 - [x] Patient can view all historical records on History tab and from Dashboard shortcut
 - [x] Admin can view selected patient's full records history, switch patients, or delete records
 - [x] No purple or violet hex codes; 100% compliant with clinical palette
+
+---
+
+## Milestone 18 — Claymorphism UI Redesign & Component Refactoring
+
+> **Goal:** Complete visual redesign of the Health Check App using Claymorphism ("Soft 3D / Pillowy UI"). Pure React Native StyleSheet implementation simulating specular highlights, shaded bottom-right depth, and sunken inset inputs without third-party CSS dependencies.
+
+### Work Completed
+
+| # | Task | File(s) | Done? |
+|---|---|---|---|
+| 18.1 | Establish Claymorphism token palette & preset styles (`clayStyles.card`, `clayStyles.cardCompact`, `clayStyles.buttonPrimary`, `clayStyles.input`, `clayStyles.pill`, `clayStyles.avatarCircle`) | `constants/theme.ts` | ✅ |
+| 18.2 | Refactor Splash screen with 3D chunky disc, specular highlights, and clay tagline capsule | `app/splash.tsx` | ✅ |
+| 18.3 | Refactor Login screen with 3D floating card, sunken inputs, chunky pushable button, and clay alert banner | `app/login.tsx` | ✅ |
+| 18.4 | Refactor Health Dashboard with 3D demographic card, clay vital cards, status pills, and action buttons | `app/(tabs)/index.tsx` | ✅ |
+| 18.5 | Refactor History screen and `RecordCard` component with 3D cards, sunken vitals grid, and clay pills | `app/(tabs)/history.tsx`, `components/history/RecordCard.tsx` | ✅ |
+| 18.6 | Refactor core inputs (`InputField`, `DatePickerField`, `CountryPhoneInput`, `AvatarPicker`) to claymorphism | `components/ui/*` | ✅ |
+| 18.7 | Refactor Admin Patients screen with 3D patient cards, inflated avatar discs, and clay modal bottom sheet | `app/(tabs)/patients.tsx` | ✅ |
+| 18.8 | Refactor Log Health form and screen with 3D live BMI card, toggle chips, and chunky save button | `components/forms/LogHealthForm.tsx`, `app/(tabs)/log-health.tsx` | ✅ |
+| 18.9 | Refactor Settings screen with 3D profile card, inflated role badge, and 3D sign out button | `app/(tabs)/settings.tsx` | ✅ |
+| 18.10 | Refactor Tab Bar in `_layout.tsx` with top border depth and soft blue shadow | `app/(tabs)/_layout.tsx` | ✅ |
+
+### Verify Before Closing Milestone
+- [x] `npx tsc --noEmit` — 0 errors ✅
+- [x] `npx expo export --platform web` — bundles all routes cleanly ✅
+- [x] 100% strictly compliant with clinical palette (no purple/violet)
+- [x] Pure React Native StyleSheet implementation (works on iOS, Android, Web)
+
 
 

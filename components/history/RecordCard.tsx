@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { HealthRecord, VitalStatus } from '../../schemas/health.schema';
 import { getOverallHealthStatus, getVitalStatus, VITAL_CONFIGS } from '../../constants/thresholds';
+import { theme, clayStyles } from '../../constants/theme';
 
 interface RecordCardProps {
   record: HealthRecord;
@@ -25,11 +26,11 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
   const getStatusBadge = (status: VitalStatus) => {
     switch (status) {
       case 'critical':
-        return { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626', label: 'CRITICAL' };
+        return { bg: '#fef2f2', borderDepth: '#fca5a5', text: '#dc2626', label: 'CRITICAL' };
       case 'warning':
-        return { bg: '#fffbeb', border: '#fde68a', text: '#d97706', label: 'WARNING' };
+        return { bg: '#fffbeb', borderDepth: '#fde68a', text: '#d97706', label: 'WARNING' };
       default:
-        return { bg: '#f0fdf4', border: '#bbf7d0', text: '#16a34a', label: 'NORMAL' };
+        return { bg: '#f0fdf4', borderDepth: '#bbf7d0', text: '#16a34a', label: 'NORMAL' };
     }
   };
 
@@ -68,10 +69,7 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
 
   const hrStatus = getVitalStatus('heartRate', record.heartRate);
   const bpStatus = getVitalStatus('systolic', record.systolic);
-  const tempStatus = getVitalStatus('temperature', record.temperature);
   const o2Status = getVitalStatus('oxygenLevel', record.oxygenLevel);
-  const bmiStatus = getVitalStatus('bmi', record.bmi);
-  const sugarStatus = getVitalStatus('bloodSugar', record.bloodSugar, record.bloodSugarType);
 
   return (
     <View style={styles.card}>
@@ -84,7 +82,7 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
       >
         <View style={styles.headerLeft}>
           <View style={styles.calendarIconBubble}>
-            <Ionicons name="calendar-outline" size={18} color="#2563eb" />
+            <Ionicons name="calendar" size={17} color="#2563eb" />
           </View>
           <View>
             <Text style={styles.dateText}>{formattedDate}</Text>
@@ -93,7 +91,16 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
         </View>
 
         <View style={styles.headerRight}>
-          <View style={[styles.statusBadge, { backgroundColor: badge.bg, borderColor: badge.border }]}>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: badge.bg,
+                borderBottomColor: badge.borderDepth,
+                borderRightColor: badge.borderDepth,
+              },
+            ]}
+          >
             <Text style={[styles.statusBadgeText, { color: badge.text }]}>{badge.label}</Text>
           </View>
           <Ionicons
@@ -105,7 +112,7 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
         </View>
       </TouchableOpacity>
 
-      {/* Primary Highlights Row (always visible) */}
+      {/* Primary Highlights Row with Sunken Clay Inset */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>HEART RATE</Text>
@@ -140,7 +147,7 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
             {/* Temperature */}
             <View style={styles.vitalBox}>
               <View style={styles.vitalBoxHeader}>
-                <Ionicons name="thermometer-outline" size={14} color="#64748b" />
+                <Ionicons name="thermometer" size={14} color="#2563eb" />
                 <Text style={styles.vitalBoxTitle}>Temperature</Text>
               </View>
               <Text style={styles.vitalBoxValue}>{record.temperature} °C</Text>
@@ -150,7 +157,7 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
             {/* BMI & Category */}
             <View style={styles.vitalBox}>
               <View style={styles.vitalBoxHeader}>
-                <Ionicons name="fitness-outline" size={14} color="#64748b" />
+                <Ionicons name="fitness" size={14} color="#2563eb" />
                 <Text style={styles.vitalBoxTitle}>BMI ({record.bmiCategory})</Text>
               </View>
               <Text style={styles.vitalBoxValue}>{record.bmi}</Text>
@@ -160,7 +167,7 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
             {/* Blood Sugar */}
             <View style={styles.vitalBox}>
               <View style={styles.vitalBoxHeader}>
-                <Ionicons name="flask-outline" size={14} color="#64748b" />
+                <Ionicons name="flask" size={14} color="#2563eb" />
                 <Text style={styles.vitalBoxTitle}>Blood Sugar</Text>
               </View>
               <Text style={styles.vitalBoxValue}>{record.bloodSugar} mg/dL</Text>
@@ -170,7 +177,7 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
             {/* Oxygen SpO2 */}
             <View style={styles.vitalBox}>
               <View style={styles.vitalBoxHeader}>
-                <Ionicons name="water-outline" size={14} color="#64748b" />
+                <Ionicons name="water" size={14} color="#2563eb" />
                 <Text style={styles.vitalBoxTitle}>Oxygen Level</Text>
               </View>
               <Text style={styles.vitalBoxValue}>{record.oxygenLevel}%</Text>
@@ -178,12 +185,13 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
             </View>
           </View>
 
-          {/* Admin Actions */}
+          {/* Admin Delete Action */}
           {isAdmin && record.id && onDelete && (
             <View style={styles.adminActionRow}>
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={handleDelete}
+                activeOpacity={0.8}
                 accessibilityLabel="Delete this health record"
               >
                 <Ionicons name="trash-outline" size={14} color="#dc2626" />
@@ -199,16 +207,9 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...clayStyles.card,
+    marginBottom: 14,
+    padding: 0,
     overflow: 'hidden',
   },
   cardHeader: {
@@ -221,25 +222,34 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   calendarIconBubble: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2.5,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
   },
   dateText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0f172a',
   },
   timeText: {
     fontSize: 12,
     color: '#64748b',
     marginTop: 1,
+    fontWeight: '500',
   },
   headerRight: {
     flexDirection: 'row',
@@ -247,14 +257,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2,
   },
   statusBadgeText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
   chevron: {
@@ -264,10 +279,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8fafc',
-    paddingVertical: 10,
+    paddingVertical: 11,
     paddingHorizontal: 16,
-    borderTopWidth: 1,
+    borderTopWidth: 1.5,
     borderTopColor: '#f1f5f9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
   },
   summaryItem: {
     flex: 1,
@@ -275,19 +292,19 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#64748b',
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
   summaryVal: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#1e293b',
     marginTop: 2,
   },
   summaryUnit: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#64748b',
   },
   criticalText: {
@@ -295,13 +312,13 @@ const styles = StyleSheet.create({
   },
   summaryDivider: {
     width: 1,
-    height: 24,
+    height: 26,
     backgroundColor: '#e2e8f0',
   },
   expandedSection: {
     paddingHorizontal: 16,
-    paddingBottom: 14,
-    paddingTop: 8,
+    paddingBottom: 16,
+    paddingTop: 10,
   },
   separator: {
     height: 1,
@@ -309,46 +326,53 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   detailsHeading: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
     color: '#475569',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   vitalsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   vitalBox: {
     width: '48.5%',
     backgroundColor: '#f8fafc',
-    borderRadius: 8,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderRadius: 14,
+    padding: 11,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2.5,
+    borderRightColor: '#e2e8f0',
+    borderBottomColor: '#cbd5e1',
   },
   vitalBoxHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 2,
+    gap: 5,
+    marginBottom: 3,
   },
   vitalBoxTitle: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#475569',
   },
   vitalBoxValue: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0f172a',
   },
   vitalBoxNormal: {
     fontSize: 10,
     color: '#94a3b8',
     marginTop: 2,
+    fontWeight: '500',
   },
   adminActionRow: {
     flexDirection: 'row',
@@ -362,15 +386,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fef2f2',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
     gap: 4,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2,
+    borderRightColor: '#fecaca',
+    borderBottomColor: '#fca5a5',
   },
   deleteButtonText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#dc2626',
   },
 });
-

@@ -75,7 +75,7 @@ export default function LogHealthScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f0f7ff',
   },
   keyboardContainer: {
     flex: 1,

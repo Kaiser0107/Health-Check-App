@@ -1,9 +1,9 @@
 /**
- * Login Screen — Clinical & Patient Sign In.
+ * Login Screen — Clinical & Patient Sign In (Claymorphism UI).
  * 
  * Roles:
  * - Admin: Manages roster, creates/deletes patient accounts, logs vitals, views history.
- * - Patient: Views personal dashboard (demographics, health status, vitals) and settings.
+ * - Patient: Views personal dashboard (demographics, health status, vitals) and history.
  * 
  * Public registration is disabled: All patient accounts are provisioned exclusively
  * by an Administrator from the Patients roster.
@@ -22,8 +22,10 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { UsernameSchema } from '../schemas/health.schema';
+import { theme, clayStyles } from '../constants/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -82,26 +84,29 @@ export default function LoginScreen() {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
+        {/* Header with 3D Clay Disc */}
         <View style={styles.header}>
           <View style={styles.logoCircle}>
             <Image
               source={require('../assets/images/logo.png')}
-              style={{ width: 68, height: 68, borderRadius: 34 }}
+              style={styles.logoImage}
               resizeMode="contain"
               accessibilityLabel="Health Check Logo"
             />
           </View>
           <Text style={styles.appTitle}>Health Check App</Text>
-          <Text style={styles.tagline}>
-            Sign in with your clinical credentials or patient account
-          </Text>
+          <View style={styles.taglinePill}>
+            <Text style={styles.tagline}>
+              Sign in with your clinical credentials or patient account
+            </Text>
+          </View>
         </View>
 
-        {/* Card Form */}
+        {/* Elevated Clay Form Card */}
         <View style={styles.card}>
           {displayError ? (
             <View style={styles.errorBanner} accessibilityRole="alert">
+              <Ionicons name="alert-circle" size={18} color={theme.colors.danger} style={{ marginRight: 6 }} />
               <Text style={styles.errorText}>{displayError}</Text>
             </View>
           ) : null}
@@ -140,111 +145,176 @@ export default function LoginScreen() {
             accessibilityLabel="Password input"
           />
 
-          {/* Submit Button */}
+          {/* Chunky Tactile Clay Submit Button */}
           <TouchableOpacity
             style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
             onPress={handleSubmit}
             disabled={submitting}
+            activeOpacity={0.8}
             accessibilityLabel="Sign In"
           >
             {submitting ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
-              <Text style={styles.submitButtonText}>Sign In</Text>
+              <View style={styles.buttonContent}>
+                <Text style={styles.submitButtonText}>Sign In</Text>
+                <Ionicons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 6 }} />
+              </View>
             )}
           </TouchableOpacity>
         </View>
 
-        {/* Notice for new patients */}
+        {/* Soft Pillowy Notice for new patients */}
         <View style={styles.noticeBox}>
+          <Ionicons name="shield-checkmark-outline" size={18} color="#2563eb" style={{ marginBottom: 4 }} />
           <Text style={styles.noticeText}>
-            🔒 Patient accounts are created directly by clinic administrators. Contact your clinician to receive your login credentials.
+            Patient accounts are created directly by clinic administrators. Contact your clinician to receive your credentials.
           </Text>
         </View>
-
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f8fafc' },
+  flex: { flex: 1, backgroundColor: theme.colors.background },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
     paddingVertical: 48,
   },
-  header: { alignItems: 'center', marginBottom: 28 },
+  header: { alignItems: 'center', marginBottom: 24 },
   logoCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: '#eff6ff',
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 3.5,
+    borderBottomWidth: 4.5,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
+    shadowColor: '#1d4ed8',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 6,
   },
-  logoIcon: { fontSize: 34 },
-  appTitle: { fontSize: 26, fontWeight: '700', color: '#0f172a', marginBottom: 6 },
-  tagline: { fontSize: 14, color: '#64748b', textAlign: 'center', maxWidth: 300, lineHeight: 20 },
-  card: {
+  logoImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+  },
+  appTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#0f172a',
+    letterSpacing: -0.5,
+    marginBottom: 8,
+  },
+  taglinePill: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2,
+    borderBottomWidth: 2.5,
+    borderRightColor: '#dbeafe',
+    borderBottomColor: '#bfdbfe',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 1,
+  },
+  tagline: {
+    fontSize: 13,
+    color: '#64748b',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+
+  // Clay Card
+  card: {
+    ...clayStyles.card,
+    marginBottom: 18,
   },
   errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fca5a5',
-    borderRadius: 8,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2,
+    borderBottomWidth: 2.5,
+    borderRightColor: '#fecaca',
+    borderBottomColor: '#fca5a5',
+    borderRadius: theme.radius.sm,
     padding: 12,
     marginBottom: 16,
   },
-  errorText: { color: '#dc2626', fontSize: 14 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  errorText: { color: '#dc2626', fontSize: 13, fontWeight: '600', flex: 1 },
+  label: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 6,
+    letterSpacing: 0.2,
+  },
   input: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#0f172a',
+    ...clayStyles.input,
     marginBottom: 16,
   },
   submitButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 4,
+    ...clayStyles.buttonPrimary,
+    marginTop: 6,
   },
-  submitButtonDisabled: { opacity: 0.6 },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitButtonDisabled: { opacity: 0.65 },
   submitButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
+
+  // Notice Box
   noticeBox: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+    borderRadius: theme.radius.md,
+    padding: 14,
+    alignItems: 'center',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2,
+    borderBottomWidth: 3,
+    borderRightColor: '#dbeafe',
+    borderBottomColor: '#bfdbfe',
+    shadowColor: '#1d4ed8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   noticeText: {
     fontSize: 12,
     color: '#64748b',
     textAlign: 'center',
     lineHeight: 18,
+    fontWeight: '500',
   },
 });

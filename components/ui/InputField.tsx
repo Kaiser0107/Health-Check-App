@@ -6,6 +6,7 @@ import {
   StyleSheet,
   KeyboardTypeOptions,
 } from 'react-native';
+import { theme } from '../../constants/theme';
 
 export interface InputFieldProps {
   label: string;
@@ -71,48 +72,62 @@ export const InputField: React.FC<InputFieldProps> = ({
   );
 };
 
-// Minimal functional styles for touch accessibility & layout
-const styles: any = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
     width: '100%',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     color: '#334155',
     marginBottom: 6,
+    letterSpacing: 0.2,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
     color: '#0f172a',
-    backgroundColor: '#ffffff',
-    minHeight: 48, // Touch target >= 48dp
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#cbd5e1',
+    borderLeftColor: '#cbd5e1',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 1.5,
+    borderRightColor: '#ffffff',
+    borderBottomColor: '#ffffff',
+    minHeight: 48,
   },
   multilineInput: {
-    minHeight: 80,
+    minHeight: 84,
     textAlignVertical: 'top',
   },
   inputError: {
-    borderColor: '#ef4444',
+    borderTopColor: '#fca5a5',
+    borderLeftColor: '#fca5a5',
+    borderRightColor: '#fee2e2',
+    borderBottomColor: '#fee2e2',
+    backgroundColor: '#fff5f5',
   },
   inputDisabled: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#e2e8f0',
     color: '#64748b',
+    borderTopColor: '#cbd5e1',
+    borderLeftColor: '#cbd5e1',
   },
   errorText: {
-    color: '#ef4444',
+    color: '#dc2626',
     fontSize: 12,
+    fontWeight: '600',
     marginTop: 4,
   },
   helperText: {
     color: '#64748b',
     fontSize: 12,
     marginTop: 4,
+    fontWeight: '500',
   },
 });

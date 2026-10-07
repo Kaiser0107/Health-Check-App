@@ -15,6 +15,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { RecordCard } from '../../components/history/RecordCard';
 import { getOverallHealthStatus } from '../../constants/thresholds';
+import { theme, clayStyles } from '../../constants/theme';
 
 export default function HistoryScreen() {
   const router = useRouter();
@@ -50,9 +51,9 @@ export default function HistoryScreen() {
           <Text style={styles.headerSubtitle}>Select a patient to view their clinical records</Text>
         </View>
 
-        <View style={styles.emptyCard}>
+        <View style={styles.emptyClayCard}>
           <View style={styles.emptyIconCircle}>
-            <Ionicons name="folder-open-outline" size={40} color="#2563eb" />
+            <Ionicons name="folder-open" size={38} color="#2563eb" />
           </View>
           <Text style={styles.emptyCardTitle}>No Patient Selected</Text>
           <Text style={styles.emptyCardText}>
@@ -62,6 +63,7 @@ export default function HistoryScreen() {
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => router.push('/(tabs)/patients' as any)}
+            activeOpacity={0.8}
             accessibilityLabel="View Patients Roster"
           >
             <Ionicons name="list-outline" size={18} color="#ffffff" style={styles.buttonIcon} />
@@ -82,10 +84,10 @@ export default function HistoryScreen() {
   const overallStatus = getOverallHealthStatus(latestRecord);
   const statusColor =
     overallStatus === 'critical'
-      ? { text: '#dc2626', bg: '#fef2f2', border: '#fca5a5' }
+      ? { text: '#dc2626', bg: '#fef2f2', borderDepth: '#fca5a5' }
       : overallStatus === 'warning'
-      ? { text: '#d97706', bg: '#fffbeb', border: '#fde68a' }
-      : { text: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' };
+      ? { text: '#d97706', bg: '#fffbeb', borderDepth: '#fde68a' }
+      : { text: '#16a34a', bg: '#f0fdf4', borderDepth: '#bbf7d0' };
 
   // Calculate quick summary metrics
   const totalRecords = records.length;
@@ -108,6 +110,7 @@ export default function HistoryScreen() {
           <TouchableOpacity
             style={styles.switchPatientChip}
             onPress={() => router.push('/(tabs)/patients' as any)}
+            activeOpacity={0.8}
             accessibilityLabel="Switch active patient"
           >
             <Ionicons name="swap-horizontal" size={14} color="#2563eb" />
@@ -129,11 +132,11 @@ export default function HistoryScreen() {
         )}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563eb']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
         }
         ListHeaderComponent={
           <>
-            {/* Patient Header Card */}
+            {/* Patient Header Clay Card */}
             <View style={styles.patientProfileBar}>
               <View style={styles.avatarCircle}>
                 {myInfo?.profilePicture ? (
@@ -157,12 +160,21 @@ export default function HistoryScreen() {
               </View>
             </View>
 
-            {/* Vitals Trend Summary Bar */}
+            {/* Vitals Trend Summary Clay Bar */}
             {totalRecords > 0 ? (
               <View style={styles.summaryBar}>
                 <View style={styles.summaryBox}>
                   <Text style={styles.summaryBoxLabel}>LATEST STATUS</Text>
-                  <View style={[styles.statusMiniBadge, { backgroundColor: statusColor.bg, borderColor: statusColor.border }]}>
+                  <View
+                    style={[
+                      styles.statusMiniBadge,
+                      {
+                        backgroundColor: statusColor.bg,
+                        borderBottomColor: statusColor.borderDepth,
+                        borderRightColor: statusColor.borderDepth,
+                      },
+                    ]}
+                  >
                     <Text style={[styles.statusMiniBadgeText, { color: statusColor.text }]}>
                       {overallStatus.toUpperCase()}
                     </Text>
@@ -171,7 +183,9 @@ export default function HistoryScreen() {
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryBox}>
                   <Text style={styles.summaryBoxLabel}>AVG HEART RATE</Text>
-                  <Text style={styles.summaryBoxValue}>{avgHeartRate} <Text style={styles.summaryUnit}>BPM</Text></Text>
+                  <Text style={styles.summaryBoxValue}>
+                    {avgHeartRate} <Text style={styles.summaryUnit}>BPM</Text>
+                  </Text>
                 </View>
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryBox}>
@@ -190,9 +204,10 @@ export default function HistoryScreen() {
                 <TouchableOpacity
                   style={styles.logNewBtn}
                   onPress={() => router.push('/(tabs)/log-health' as any)}
+                  activeOpacity={0.8}
                   accessibilityLabel="Log new vitals"
                 >
-                  <Ionicons name="add-circle-outline" size={16} color="#2563eb" />
+                  <Ionicons name="add-circle" size={16} color="#2563eb" />
                   <Text style={styles.logNewBtnText}>Log New Vitals</Text>
                 </TouchableOpacity>
               )}
@@ -202,13 +217,13 @@ export default function HistoryScreen() {
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#2563eb" />
+              <ActivityIndicator size="large" color={theme.colors.primary} />
               <Text style={styles.loadingText}>Loading health records...</Text>
             </View>
           ) : (
-            <View style={styles.emptyContainer}>
+            <View style={styles.emptyClayCard}>
               <View style={styles.emptyIconCircle}>
-                <Ionicons name="pulse-outline" size={44} color="#94a3b8" />
+                <Ionicons name="pulse" size={42} color="#94a3b8" />
               </View>
               <Text style={styles.emptyTitle}>No Health Records Found</Text>
               <Text style={styles.emptySubtitle}>
@@ -220,6 +235,7 @@ export default function HistoryScreen() {
                 <TouchableOpacity
                   style={styles.emptyActionButton}
                   onPress={() => router.push('/(tabs)/log-health' as any)}
+                  activeOpacity={0.8}
                 >
                   <Ionicons name="add" size={18} color="#ffffff" style={{ marginRight: 6 }} />
                   <Text style={styles.emptyActionButtonText}>Log First Vitals</Text>
@@ -236,7 +252,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.background,
     paddingTop: 60,
   },
   header: {
@@ -251,27 +267,40 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 26,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0f172a',
+    letterSpacing: -0.3,
   },
   headerSubtitle: {
     fontSize: 13,
     color: '#64748b',
     marginTop: 2,
+    fontWeight: '500',
   },
   switchPatientChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#eff6ff',
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    paddingVertical: 8,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2,
+    borderBottomWidth: 3,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   switchPatientText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#2563eb',
     marginLeft: 4,
   },
@@ -280,101 +309,110 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  // Patient Profile Bar
+  // Patient Profile Clay Bar
   patientProfileBar: {
+    ...clayStyles.cardCompact,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    marginBottom: 14,
   },
   avatarCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2.5,
+    borderBottomWidth: 3.5,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
     overflow: 'hidden',
     marginRight: 12,
   },
   avatarImage: {
-    width: 46,
-    height: 46,
+    width: 50,
+    height: 50,
   },
   avatarInitial: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#2563eb',
   },
   patientMetaCol: {
     flex: 1,
   },
   patientNameText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: '#0f172a',
   },
   patientUsernameText: {
     fontSize: 12,
     color: '#64748b',
     marginTop: 1,
+    fontWeight: '500',
   },
   idChip: {
     alignSelf: 'flex-start',
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 6,
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1,
+    borderBottomWidth: 1.5,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
     marginTop: 3,
   },
   idChipText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#475569',
+    fontWeight: '700',
+    color: '#1d4ed8',
   },
   countBadge: {
     alignItems: 'center',
     backgroundColor: '#eff6ff',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#dbeafe',
+    borderRadius: theme.radius.md,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 2,
+    borderBottomWidth: 3,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
   },
   countNumber: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#2563eb',
   },
   countLabel: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748b',
     marginTop: 1,
   },
 
-  // Trend Summary Bar
+  // Trend Summary Clay Bar
   summaryBar: {
+    ...clayStyles.cardCompact,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   summaryBox: {
     flex: 1,
@@ -382,35 +420,40 @@ const styles = StyleSheet.create({
   },
   summaryBoxLabel: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#64748b',
     letterSpacing: 0.5,
     marginBottom: 4,
   },
   summaryBoxValue: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0f172a',
   },
   summaryUnit: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#64748b',
   },
   statusMiniBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2,
   },
   statusMiniBadgeText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
   summaryDivider: {
     width: 1,
-    height: 28,
+    height: 30,
     backgroundColor: '#e2e8f0',
   },
 
@@ -423,8 +466,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     color: '#475569',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -432,42 +475,58 @@ const styles = StyleSheet.create({
   logNewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     backgroundColor: '#eff6ff',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2.5,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
   },
   logNewBtnText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#2563eb',
   },
 
-  // Empty State
-  emptyCard: {
+  // Empty State Clay Card
+  emptyClayCard: {
+    ...clayStyles.card,
     margin: 20,
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    padding: 26,
   },
   emptyIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
+    borderTopWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderTopColor: '#ffffff',
+    borderLeftColor: '#ffffff',
+    borderRightWidth: 3,
+    borderBottomWidth: 4,
+    borderRightColor: '#bfdbfe',
+    borderBottomColor: '#93c5fd',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
   },
   emptyCardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 19,
+    fontWeight: '800',
     color: '#0f172a',
     marginBottom: 6,
   },
@@ -477,16 +536,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 19,
     marginBottom: 18,
+    fontWeight: '500',
   },
   primaryButton: {
+    ...clayStyles.buttonPrimary,
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
     width: '100%',
-    justifyContent: 'center',
   },
   buttonIcon: {
     marginRight: 8,
@@ -494,7 +549,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#ffffff',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   loadingContainer: {
@@ -505,19 +560,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     marginTop: 10,
-  },
-  emptyContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 28,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginTop: 8,
+    fontWeight: '500',
   },
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: '#334155',
     marginTop: 10,
   },
@@ -528,20 +575,18 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 18,
     maxWidth: 280,
+    fontWeight: '500',
   },
   emptyActionButton: {
+    ...clayStyles.buttonPrimary,
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
     marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
   },
   emptyActionButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#ffffff',
   },
 });
-

@@ -10,21 +10,21 @@ import { theme } from '../constants/theme';
 
 export default function SplashScreen() {
   const router = useRouter();
-  const [animationDone, setAnimationDone] = useState(false);
 
   const dropAnim = useRef(new Animated.Value(-180)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // Reset initial animation values so it always replays on re-entry
     dropAnim.setValue(-180);
     fadeAnim.setValue(0);
-    setAnimationDone(false);
+    scaleAnim.setValue(1);
 
     const useNative = Platform.OS !== 'web';
 
-    // Drop animation: logo falls from above into center with a bounce
     Animated.sequence([
+      // Phase 1: Entrance — logo drops into center with bounce
       Animated.parallel([
         Animated.timing(dropAnim, {
           toValue: 0,
@@ -39,17 +39,26 @@ export default function SplashScreen() {
         }),
       ]),
       // Hold for a moment after landing
-      Animated.delay(800),
+      Animated.delay(600),
+      // Phase 2: Exit — gentle scale-up and fade-out before navigating
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.in(Easing.ease),
+          useNativeDriver: useNative,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1.08,
+          duration: 400,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: useNative,
+        }),
+      ]),
     ]).start(() => {
-      setAnimationDone(true);
+      router.replace('/login' as any);
     });
   }, []);
-
-  useEffect(() => {
-    if (animationDone) {
-      router.replace('/login' as any);
-    }
-  }, [animationDone]);
 
   return (
     <View style={styles.container}>
@@ -57,7 +66,7 @@ export default function SplashScreen() {
         style={[
           styles.logoContainer,
           {
-            transform: [{ translateY: dropAnim }],
+            transform: [{ translateY: dropAnim }, { scale: scaleAnim }],
             opacity: fadeAnim,
           },
         ]}

@@ -8,7 +8,7 @@
  * Public registration is disabled: All patient accounts are provisioned exclusively
  * by an Administrator from the Patients roster.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,6 +37,27 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Transition entrance animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 450,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    ]).start();
+  }, []);
 
   const displayError = localError ?? authError;
 
@@ -84,26 +107,34 @@ export default function LoginScreen() {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header with 3D Clay Disc */}
-        <View style={styles.header}>
-          <View style={styles.logoCircle}>
-            <Image
-              source={require('../assets/images/logo.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-              accessibilityLabel="Health Check Logo"
-            />
+        {/* Header and Card with Entrance Transition */}
+        <Animated.View
+          style={{
+            width: '100%',
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+        >
+          {/* Header with 3D Clay Disc */}
+          <View style={styles.header}>
+            <View style={styles.logoCircle}>
+              <Image
+                source={require('../assets/images/logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+                accessibilityLabel="Health Check Logo"
+              />
+            </View>
+            <Text style={styles.appTitle}>Health Check App</Text>
+            <View style={styles.taglinePill}>
+              <Text style={styles.tagline}>
+                Sign in with your clinical credentials or patient account
+              </Text>
+            </View>
           </View>
-          <Text style={styles.appTitle}>Health Check App</Text>
-          <View style={styles.taglinePill}>
-            <Text style={styles.tagline}>
-              Sign in with your clinical credentials or patient account
-            </Text>
-          </View>
-        </View>
 
-        {/* Elevated Clay Form Card */}
-        <View style={styles.card}>
+          {/* Elevated Clay Form Card */}
+          <View style={styles.card}>
           {displayError ? (
             <View style={styles.errorBanner} accessibilityRole="alert">
               <Ionicons name="alert-circle" size={18} color={theme.colors.danger} style={{ marginRight: 6 }} />
@@ -171,6 +202,7 @@ export default function LoginScreen() {
             Patient accounts are created directly by clinic administrators. Contact your clinician to receive your credentials.
           </Text>
         </View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

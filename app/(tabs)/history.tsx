@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,9 @@ import {
   StyleSheet,
   RefreshControl,
   Image,
+  Animated,
+  Easing,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +36,28 @@ export default function HistoryScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
+
+  useEffect(() => {
+    if (!isLoading) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start();
+    }
+  }, [isLoading]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -46,30 +71,38 @@ export default function HistoryScreen() {
   if (isAdmin && !currentPatientId) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Health History</Text>
-          <Text style={styles.headerSubtitle}>Select a patient to view their clinical records</Text>
-        </View>
-
-        <View style={styles.emptyClayCard}>
-          <View style={styles.emptyIconCircle}>
-            <Ionicons name="folder-open" size={38} color="#2563eb" />
+        <Animated.View
+          style={{
+            flex: 1,
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+        >
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Health History</Text>
+            <Text style={styles.headerSubtitle}>Select a patient to view their clinical records</Text>
           </View>
-          <Text style={styles.emptyCardTitle}>No Patient Selected</Text>
-          <Text style={styles.emptyCardText}>
-            Choose a patient from the clinical roster to view their historical health records and vital trends.
-          </Text>
 
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push('/(tabs)/patients' as any)}
-            activeOpacity={0.8}
-            accessibilityLabel="View Patients Roster"
-          >
-            <Ionicons name="list-outline" size={18} color="#ffffff" style={styles.buttonIcon} />
-            <Text style={styles.primaryButtonText}>View Patients Roster ({patients.length})</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.emptyClayCard}>
+            <View style={styles.emptyIconCircle}>
+              <Ionicons name="folder-open" size={38} color="#2563eb" />
+            </View>
+            <Text style={styles.emptyCardTitle}>No Patient Selected</Text>
+            <Text style={styles.emptyCardText}>
+              Choose a patient from the clinical roster to view their historical health records and vital trends.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push('/(tabs)/patients' as any)}
+              activeOpacity={0.8}
+              accessibilityLabel="View Patients Roster"
+            >
+              <Ionicons name="list-outline" size={18} color="#ffffff" style={styles.buttonIcon} />
+              <Text style={styles.primaryButtonText}>View Patients Roster ({patients.length})</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </View>
     );
   }
@@ -98,26 +131,33 @@ export default function HistoryScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Top Header */}
-      <View style={styles.header}>
-        <View style={styles.headerTextCol}>
-          <Text style={styles.headerTitle}>Health History</Text>
-          <Text style={styles.headerSubtitle}>
-            {isAdmin ? `Patient Records: ${displayName}` : 'My Complete Health Record'}
-          </Text>
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }}
+      >
+        {/* Top Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTextCol}>
+            <Text style={styles.headerTitle}>Health History</Text>
+            <Text style={styles.headerSubtitle}>
+              {isAdmin ? `Patient Records: ${displayName}` : 'My Complete Health Record'}
+            </Text>
+          </View>
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.switchPatientChip}
+              onPress={() => router.push('/(tabs)/patients' as any)}
+              activeOpacity={0.8}
+              accessibilityLabel="Switch active patient"
+            >
+              <Ionicons name="swap-horizontal" size={14} color="#2563eb" />
+              <Text style={styles.switchPatientText}>Switch Patient</Text>
+            </TouchableOpacity>
+          )}
         </View>
-        {isAdmin && (
-          <TouchableOpacity
-            style={styles.switchPatientChip}
-            onPress={() => router.push('/(tabs)/patients' as any)}
-            activeOpacity={0.8}
-            accessibilityLabel="Switch active patient"
-          >
-            <Ionicons name="swap-horizontal" size={14} color="#2563eb" />
-            <Text style={styles.switchPatientText}>Switch Patient</Text>
-          </TouchableOpacity>
-        )}
-      </View>
 
       <FlatList
         data={records}
@@ -245,6 +285,7 @@ export default function HistoryScreen() {
           )
         }
       />
+      </Animated.View>
     </View>
   );
 }

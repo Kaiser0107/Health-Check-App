@@ -30,11 +30,11 @@ export default function RootLayout() {
     <AuthProvider>
       <AppProvider>
         <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
           <Stack.Screen name="index" />
-          <Stack.Screen name="splash" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="splash" options={{ animation: 'none' }} />
+          <Stack.Screen name="login" options={{ animation: 'fade' }} />
+          <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
           <Stack.Screen name="+not-found" />
         </Stack>
       </AppProvider>

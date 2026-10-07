@@ -5,11 +5,19 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { HealthRecord, VitalStatus } from '../../schemas/health.schema';
 import { getOverallHealthStatus, getVitalStatus, VITAL_CONFIGS } from '../../constants/thresholds';
 import { theme, clayStyles } from '../../constants/theme';
+
+// Enable layout animation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface RecordCardProps {
   record: HealthRecord;
@@ -20,6 +28,11 @@ interface RecordCardProps {
 
 export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps) {
   const [expanded, setExpanded] = useState(index === 0); // default expand most recent record
+
+  const toggleExpand = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(!expanded);
+  };
 
   const overallStatus: VitalStatus = getOverallHealthStatus(record);
 
@@ -76,7 +89,7 @@ export function RecordCard({ record, index, isAdmin, onDelete }: RecordCardProps
       {/* Card Header */}
       <TouchableOpacity
         style={styles.cardHeader}
-        onPress={() => setExpanded(!expanded)}
+        onPress={toggleExpand}
         activeOpacity={0.7}
         accessibilityLabel={`Record from ${formattedDate}, tap to expand or collapse`}
       >

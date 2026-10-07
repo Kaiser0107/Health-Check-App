@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   ActivityIndicator,
   StyleSheet,
   Image,
+  Animated,
+  Easing,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +23,28 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { myInfo, latestRecord, currentPatientId, patients, isLoading } = useApp();
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
+
+  useEffect(() => {
+    if (!isLoading) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start();
+    }
+  }, [isLoading]);
 
   const overallStatus: VitalStatus = getOverallHealthStatus(latestRecord);
 
@@ -62,42 +87,50 @@ export default function DashboardScreen() {
   if (isAdmin && !currentPatientId) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Admin Dashboard</Text>
-          <Text style={styles.headerSubtitle}>System Overview & Patient Roster</Text>
-        </View>
-
-        <View style={styles.emptyClayCard}>
-          <View style={styles.emptyIconCircle}>
-            <Ionicons name="people" size={38} color="#2563eb" />
+        <Animated.View
+          style={{
+            width: '100%',
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+        >
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Admin Dashboard</Text>
+            <Text style={styles.headerSubtitle}>System Overview & Patient Roster</Text>
           </View>
-          <Text style={styles.emptyCardTitle}>No Patient Selected</Text>
-          <Text style={styles.emptyCardText}>
-            Select a patient from the clinical roster to monitor their vital measurements and health status.
-          </Text>
 
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push('/(tabs)/patients' as any)}
-            activeOpacity={0.8}
-            accessibilityLabel="View Patients Roster"
-          >
-            <Ionicons name="list-outline" size={18} color="#ffffff" style={styles.buttonIcon} />
-            <Text style={styles.primaryButtonText}>View Patients Roster ({patients.length})</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.emptyClayCard}>
+            <View style={styles.emptyIconCircle}>
+              <Ionicons name="people" size={38} color="#2563eb" />
+            </View>
+            <Text style={styles.emptyCardTitle}>No Patient Selected</Text>
+            <Text style={styles.emptyCardText}>
+              Select a patient from the clinical roster to monitor their vital measurements and health status.
+            </Text>
 
-        {/* Quick Stats Grid with Clay Tiles */}
-        <View style={styles.statsRow}>
-          <View style={styles.statClayBox}>
-            <Text style={styles.statNumber}>{patients.length}</Text>
-            <Text style={styles.statLabel}>Registered Patients</Text>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push('/(tabs)/patients' as any)}
+              activeOpacity={0.8}
+              accessibilityLabel="View Patients Roster"
+            >
+              <Ionicons name="list-outline" size={18} color="#ffffff" style={styles.buttonIcon} />
+              <Text style={styles.primaryButtonText}>View Patients Roster ({patients.length})</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.statClayBox}>
-            <Text style={[styles.statNumber, { color: '#16a34a' }]}>Active</Text>
-            <Text style={styles.statLabel}>System Status</Text>
+
+          {/* Quick Stats Grid with Clay Tiles */}
+          <View style={styles.statsRow}>
+            <View style={styles.statClayBox}>
+              <Text style={styles.statNumber}>{patients.length}</Text>
+              <Text style={styles.statLabel}>Registered Patients</Text>
+            </View>
+            <View style={styles.statClayBox}>
+              <Text style={[styles.statNumber, { color: '#16a34a' }]}>Active</Text>
+              <Text style={styles.statLabel}>System Status</Text>
+            </View>
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     );
   }
@@ -114,7 +147,14 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Top Header */}
+      <Animated.View
+        style={{
+          width: '100%',
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }}
+      >
+        {/* Top Header */}
       <View style={styles.header}>
         <View style={styles.headerTextCol}>
           <Text style={styles.headerTitle}>
@@ -346,6 +386,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
       )}
+      </Animated.View>
     </ScrollView>
   );
 }

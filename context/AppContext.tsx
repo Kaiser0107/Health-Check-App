@@ -235,6 +235,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           contactNumber: input.contactNumber.trim(),
           patientId: input.patientId?.trim() || `PAT-${input.username.trim().toUpperCase()}`,
           profilePicture: input.profilePicture,
+          password: input.password,
           createdAt: new Date().toISOString(),
         };
 
@@ -335,6 +336,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await saveLocalMyInfo(uid, info);
 
         // 4. Update local roster
+        const resolvedPassword = input.newPassword?.trim() || existing?.password;
         await saveLocalPatientToRoster({
           uid,
           username: updatedUsername,
@@ -344,6 +346,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           contactNumber: info.contactNumber,
           patientId: info.patientId,
           profilePicture: info.profilePicture,
+          password: resolvedPassword,
           createdAt: existing?.createdAt || new Date().toISOString(),
         });
 
@@ -360,6 +363,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   contactNumber: info.contactNumber,
                   patientId: info.patientId,
                   profilePicture: info.profilePicture,
+                  password: resolvedPassword,
                 }
               : p
           )

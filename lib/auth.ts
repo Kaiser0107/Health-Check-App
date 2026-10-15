@@ -58,6 +58,31 @@ export function resolveRole(username: string): UserRole {
   return ADMIN_USERNAMES.includes(username.trim().toLowerCase()) ? 'admin' : 'patient';
 }
 
+/**
+ * Retrieve a patient's password for administrative viewing/editing.
+ * Checks local roster first, then falls back to Firestore users document.
+ */
+export async function adminGetPatientPassword(uid: string): Promise<string> {
+  // 1. Check local roster
+  try {
+    const roster = await getLocalRoster();
+    const entry = roster.find((p) => p.uid === uid);
+    if (entry?.password) return entry.password;
+  } catch {
+    // continue
+  }
+
+  // 2. Check Firestore user document
+  try {
+    const userDoc = await fetchUserDoc(uid);
+    if (userDoc?.password) return userDoc.password;
+  } catch {
+    // continue
+  }
+
+  return '';
+}
+
 /** Read user metadata from Firestore. */
 async function fetchUserDoc(uid: string): Promise<FirestoreUser | null> {
   if (!isFirebaseConfigured || !uid) return null;
@@ -158,6 +183,7 @@ export async function register(username: string, password: string): Promise<AppU
         uid,
         username: cleanUsername,
         fullName: cleanUsername,
+        password,
         createdAt: new Date().toISOString(),
       });
     }
@@ -272,6 +298,7 @@ export async function adminCreatePatientUser(
     contactNumber: patientProfile.contactNumber,
     patientId: patientProfile.patientId,
     profilePicture: patientProfile.profilePicture,
+    password: input.password,
     createdAt: now,
   };
   await saveLocalPatientToRoster(summary);

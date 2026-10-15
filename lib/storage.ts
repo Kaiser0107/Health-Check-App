@@ -137,6 +137,7 @@ export interface RosterPatient {
   contactNumber?: string;
   patientId?: string;
   profilePicture?: string;
+  password?: string;
   createdAt: string;
 }
 

@@ -163,6 +163,7 @@ export const PatientSummarySchema = z.object({
   contactNumber: z.string().optional(),
   patientId: z.string().optional(),
   profilePicture: z.string().optional(),
+  password: z.string().optional(),
   createdAt: z.string(),    // ISO timestamp
 });
 export type PatientSummary = z.infer<typeof PatientSummarySchema>;

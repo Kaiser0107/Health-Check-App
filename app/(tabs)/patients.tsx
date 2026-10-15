@@ -29,6 +29,7 @@ import {
   MyInfo,
 } from '../../schemas/health.schema';
 import { getLocalMyInfo } from '../../lib/storage';
+import { adminGetPatientPassword } from '../../lib/auth';
 import { DatePickerField } from '../../components/ui/DatePickerField';
 import { CountryPhoneInput } from '../../components/ui/CountryPhoneInput';
 import { AvatarPicker } from '../../components/ui/AvatarPicker';
@@ -67,6 +68,8 @@ export default function PatientsScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientSummary | null>(null);
   const [editUsername, setEditUsername] = useState('');
+  const [currentPatientPassword, setCurrentPatientPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [editPassword, setEditPassword] = useState('');
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [editFullName, setEditFullName] = useState('');
@@ -157,6 +160,14 @@ export default function PatientsScreen() {
     setEditUsername(patient.username || '');
     setEditPassword('');
     setShowEditPassword(false);
+    setShowCurrentPassword(false);
+
+    // Retrieve patient password (from patient summary or through admin helper)
+    let pwd = patient.password || '';
+    if (!pwd) {
+      pwd = await adminGetPatientPassword(patient.uid);
+    }
+    setCurrentPatientPassword(pwd);
 
     // Load full profile details from storage
     const local = await getLocalMyInfo(patient.uid);
@@ -642,7 +653,40 @@ export default function PatientsScreen() {
                   autoCorrect={false}
                 />
 
-                <Text style={styles.fieldLabel}>New Password (Optional)</Text>
+                <Text style={styles.fieldLabel}>Current Patient Password</Text>
+                <View style={styles.currentPasswordBox}>
+                  <View style={styles.currentPasswordRow}>
+                    <Ionicons name="key-outline" size={18} color="#2563eb" style={{ marginRight: 8 }} />
+                    <Text
+                      style={[
+                        styles.currentPasswordText,
+                        !currentPatientPassword && styles.currentPasswordPlaceholder,
+                      ]}
+                      selectable
+                    >
+                      {currentPatientPassword
+                        ? showCurrentPassword
+                          ? currentPatientPassword
+                          : '••••••••'
+                        : 'No password recorded (default patient123)'}
+                    </Text>
+                  </View>
+                  {!!currentPatientPassword && (
+                    <TouchableOpacity
+                      style={styles.eyeButtonInline}
+                      onPress={() => setShowCurrentPassword((prev) => !prev)}
+                      accessibilityLabel={showCurrentPassword ? 'Hide password' : 'Show password'}
+                    >
+                      <Ionicons
+                        name={showCurrentPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={18}
+                        color="#64748b"
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <Text style={styles.fieldLabel}>Change Password (Optional)</Text>
                 <View style={styles.passwordContainer}>
                   <TextInput
                     style={styles.passwordInput}
@@ -657,7 +701,7 @@ export default function PatientsScreen() {
                   <TouchableOpacity
                     style={styles.eyeButton}
                     onPress={() => setShowEditPassword((prev) => !prev)}
-                    accessibilityLabel={showEditPassword ? 'Hide password' : 'Show password'}
+                    accessibilityLabel={showEditPassword ? 'Hide new password' : 'Show new password'}
                   >
                     <Ionicons
                       name={showEditPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -1082,6 +1126,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0f172a',
     marginBottom: 14,
+  },
+  currentPasswordBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#eff6ff',
+    borderWidth: 1.5,
+    borderColor: '#bfdbfe',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+  },
+  currentPasswordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  currentPasswordText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1e3a8a',
+    letterSpacing: 0.5,
+  },
+  currentPasswordPlaceholder: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#64748b',
+    fontStyle: 'italic',
+  },
+  eyeButtonInline: {
+    paddingLeft: 10,
+    paddingVertical: 2,
   },
   passwordContainer: {
     flexDirection: 'row',

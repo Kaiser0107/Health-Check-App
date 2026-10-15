@@ -183,6 +183,8 @@ export async function adminGetAllPatients(): Promise<PatientSummary[]> {
           myInfo?.patientId || locRoster?.patientId || p.patientId;
         const bestUsername =
           p.username || locRoster?.username || p.uid;
+        const bestPassword =
+          p.password || locRoster?.password;
 
         const resolved: PatientSummary = {
           ...p,
@@ -193,6 +195,7 @@ export async function adminGetAllPatients(): Promise<PatientSummary[]> {
           sex: bestSex,
           contactNumber: bestContact,
           patientId: bestPatientId,
+          password: bestPassword,
         };
 
         // If local roster had stale data, repair it silently
